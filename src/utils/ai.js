@@ -19,7 +19,7 @@ export async function generateWithAI(prompt) {
           messages: [
             {
               role: "system",
-              content: "You are a professional creative agency assistant. Generate concise, structured, client-ready content. No conversational filler."
+              content: "You are a professional creative agency assistant. Generate content that is clean, structured, and easy to read. Use bullet points for lists. Avoid excessive Markdown symbols like triple asterisks. Use double asterisks for bold headers only. No conversational filler."
             },
             { 
               role: "user", 
@@ -32,7 +32,10 @@ export async function generateWithAI(prompt) {
       const data = await response.json();
 
       if (response.ok && data.choices?.[0]?.message?.content) {
-        return data.choices[0].message.content;
+        // Post-process to remove triple asterisks or strange AI formatting artifacts
+        let content = data.choices[0].message.content;
+        content = content.replace(/\*\*\*/g, '**'); // Convert *** to **
+        return content.trim();
       }
       
       console.warn(`Model ${model} failed or busy, trying next...`);
