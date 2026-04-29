@@ -6,8 +6,14 @@ const FREE_MODELS = [
 ];
 
 export async function generateWithAI(prompt, modelIndex = 0) {
+  const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+  
+  if (!apiKey) {
+    return "Error: API Key missing. Please restart your dev server.";
+  }
+
   if (modelIndex >= FREE_MODELS.length) {
-    return "AI generation failed. All models are currently busy. Please try again in a moment.";
+    return "AI Error: All free models are currently busy. Please wait 30 seconds and try again.";
   }
 
   const model = FREE_MODELS[modelIndex];
@@ -16,17 +22,17 @@ export async function generateWithAI(prompt, modelIndex = 0) {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+        "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         "HTTP-Referer": "https://docmint.app",
-        "X-Title": "Docmint Agency Document Generator"
+        "X-Title": "Docmint"
       },
       body: JSON.stringify({
         model,
         messages: [
           {
             role: "system",
-            content: "You are a professional creative agency assistant. Generate concise, structured, client-ready content. No conversational filler — just the output."
+            content: "You are a professional creative agency assistant. Generate concise, structured, client-ready content. No conversational filler."
           },
           {
             role: "user",
@@ -38,20 +44,19 @@ export async function generateWithAI(prompt, modelIndex = 0) {
 
     const data = await response.json();
 
-    // If rate-limited or provider error, try next model automatically
-    if (data.error?.code === 429 || data.error?.message?.includes("rate-limit") || data.error?.message?.includes("provider")) {
-      console.warn(`Model ${model} rate-limited, trying next...`);
+    // Handle OpenRouter-specific rate limits or provider errors by trying next model
+    if (data.error?.code === 429 || data.error?.code === 408 || data.error?.message?.includes("rate") || data.error?.message?.includes("provider")) {
+      console.warn(`Model ${model} busy, trying fallback...`);
       return generateWithAI(prompt, modelIndex + 1);
     }
 
-    if (!response.ok || data.error) {
-      console.error("OpenRouter Error:", data.error);
-      return "AI generation failed. Please try again.";
+    if (!response.ok) {
+      return `AI Error: ${data.error?.message || response.statusText}`;
     }
 
-    return data.choices?.[0]?.message?.content || "No response from AI";
+    return data.choices?.[0]?.message?.content || "AI returned an empty response. Please try again.";
   } catch (error) {
-    console.error("Fetch Error:", error);
-    return "AI generation failed. Please check your connection and try again.";
+    console.error("AI Fetch Error:", error);
+    return "AI Connection failed. Check your internet or API key.";
   }
 }
