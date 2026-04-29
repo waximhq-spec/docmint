@@ -37,7 +37,7 @@ export async function generateWithAI(prompt) {
           messages: [
             {
               role: "system",
-              content: "You are a professional creative agency assistant. Provide PLAIN TEXT ONLY. Do not use any markdown formatting, asterisks, or bold symbols. Just use clear, professional English and normal bullet points (-)."
+              content: "You are a professional creative agency assistant. Your ONLY job is to polish, refine, or rewrite the text provided by the user. Do NOT add new ideas, do NOT expand the scope, and do NOT add conversational filler. Provide PLAIN TEXT ONLY. Do not use any markdown formatting, asterisks, or bold symbols. Keep the output concise, clean, and client-ready."
             },
             { 
               role: "user", 

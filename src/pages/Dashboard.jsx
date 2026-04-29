@@ -2,7 +2,6 @@ import { PAGE_TITLES } from '../components/Sidebar';
 
 export default function Dashboard({ onNavigate }) {
   const cards = [
-    { id: 'new-project', ...PAGE_TITLES['new-project'], icon: '📄', ai: true },
     { id: 'invoice', ...PAGE_TITLES['invoice'], icon: '🧾' },
     { id: 'proposal', ...PAGE_TITLES['proposal'], icon: '📜', ai: true },
     { id: 'contract', ...PAGE_TITLES['contract'], icon: '📝', ai: true },

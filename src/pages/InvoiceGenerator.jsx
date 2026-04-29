@@ -20,19 +20,18 @@ const DEFAULT_FORM = {
   clientName: '',
   companyName: '',
   email: '',
-  items: [{ desc: '', qty: 1, rate: '' }],
-  expenses: [],
+  projectName: '',
+  totalAmount: '',
+  advancePercent: '50',
+  manualAdvance: '',
   invoiceNumber: '',
   invoiceDate: new Date().toISOString().split('T')[0],
   dueDate: '',
-  type: 'Full Payment',
+  type: 'Full Payment Invoice',
   status: 'Unpaid',
   gstEnabled: false,
   gstRate: 18,
-  discount: '',
-  advancePaid: '',
-  advanceRequested: '',
-  notes: 'Payment due within 7 days.\nLate payments incur a 5% fee after the due date.\nIncludes 2 rounds of revisions as agreed.',
+  notes: 'Payment due within 7 days.\nLate payments incur a 5% fee after the due date.',
 };
 
 export default function InvoiceGenerator() {
@@ -63,29 +62,25 @@ export default function InvoiceGenerator() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const setProv = (k, v) => setProvider(p => ({ ...p, [k]: v }));
 
-  const addItem = () => set('items', [...form.items, { desc: '', qty: 1, rate: '' }]);
-  const removeItem = (i) => set('items', form.items.filter((_, idx) => idx !== i));
-  const updateItem = (i, k, v) => {
-    const newItems = [...form.items];
-    newItems[i][k] = v;
-    set('items', newItems);
-  };
-
-  const addExpense = () => set('expenses', [...form.expenses, { desc: '', amount: '' }]);
-  const updateExpense = (i, k, v) => {
-    const newEx = [...form.expenses];
-    newEx[i][k] = v;
-    set('expenses', newEx);
-  };
-
   const calculateTotals = () => {
-    const subItems = form.items.reduce((acc, item) => acc + (parseFloat(item.qty) * parseFloat(item.rate) || 0), 0);
-    const subEx = form.expenses.reduce((acc, exp) => acc + (parseFloat(exp.amount) || 0), 0);
-    const subtotal = subItems + subEx;
-    const discount = parseFloat(form.discount) || 0;
-    const afterDiscount = subtotal - discount;
-    const gst = form.gstEnabled ? (afterDiscount * form.gstRate) / 100 : 0;
-    return { subtotal, discount, gst, total: afterDiscount + gst };
+    const total = parseFloat(form.totalAmount) || 0;
+    const gst = form.gstEnabled ? (total * form.gstRate) / 100 : 0;
+    const grandTotal = total + gst;
+    
+    let advance = 0;
+    if (form.manualAdvance) {
+      advance = parseFloat(form.manualAdvance) || 0;
+    } else {
+      advance = (grandTotal * (parseFloat(form.advancePercent) || 0)) / 100;
+    }
+    
+    const remaining = grandTotal - advance;
+
+    let dueNow = grandTotal;
+    if (form.type === 'Advance Invoice') dueNow = advance;
+    if (form.type === 'Final Invoice (Remaining Balance)') dueNow = remaining;
+
+    return { total, gst, grandTotal, advance, remaining, dueNow };
   };
 
   const totals = calculateTotals();
@@ -142,47 +137,54 @@ export default function InvoiceGenerator() {
           </div>
 
           <div className="card">
-            <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
-              3. Services & Expenses
-              <button className="btn btn-secondary" onClick={addItem} style={{ padding: '4px 12px', fontSize: 11 }}>+ Add Item</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {form.items.map((item, i) => (
-                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 60px 100px 30px', gap: 10, alignItems: 'end' }}>
-                  <div className="form-group">
-                    <label style={{ fontSize: 11 }}>Description</label>
-                    <input value={item.desc} onChange={e => updateItem(i, 'desc', e.target.value)} placeholder="e.g. Video Editing" />
-                  </div>
-                  <div className="form-group">
-                    <label style={{ fontSize: 11 }}>Qty</label>
-                    <input type="number" value={item.qty} onChange={e => updateItem(i, 'qty', e.target.value)} />
-                  </div>
-                  <div className="form-group">
-                    <label style={{ fontSize: 11 }}>Rate</label>
-                    <input type="number" value={item.rate} onChange={e => updateItem(i, 'rate', e.target.value)} placeholder="0.00" />
-                  </div>
-                  <button onClick={() => removeItem(i)} style={{ background: 'none', border: 'none', color: '#c00', cursor: 'pointer', paddingBottom: 10 }}>×</button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-title">4. Financials</div>
+            <div className="card-title">3. Project & Financials</div>
             <div className="form-grid">
+              <div className="form-group full">
+                <label>Project Name</label>
+                <input value={form.projectName} onChange={e => set('projectName', e.target.value)} placeholder="e.g. Brand Identity Design" />
+              </div>
+              <div className="form-group">
+                <label>Total Project Amount</label>
+                <input type="number" value={form.totalAmount} onChange={e => set('totalAmount', e.target.value)} placeholder="0.00" />
+              </div>
               <div className="form-group">
                 <label>Invoice Type</label>
                 <select value={form.type} onChange={e => set('type', e.target.value)}>
-                  <option>Full Payment</option>
+                  <option>Full Payment Invoice</option>
                   <option>Advance Invoice</option>
-                  <option>Final Invoice</option>
+                  <option>Final Invoice (Remaining Balance)</option>
                 </select>
               </div>
+              
+              {form.type !== 'Full Payment Invoice' && (
+                <>
+                  <div className="form-group">
+                    <label>Advance %</label>
+                    <input type="number" value={form.advancePercent} onChange={e => { set('advancePercent', e.target.value); set('manualAdvance', ''); }} placeholder="50" />
+                  </div>
+                  <div className="form-group">
+                    <label>OR Manual Advance Amount</label>
+                    <input type="number" value={form.manualAdvance} onChange={e => set('manualAdvance', e.target.value)} placeholder="0.00" />
+                  </div>
+                </>
+              )}
+
               <div className="form-group">
-                <label>Discount</label>
-                <input type="number" value={form.discount} onChange={e => set('discount', e.target.value)} placeholder="0" />
+                <label>Payment Status</label>
+                <select value={form.status} onChange={e => set('status', e.target.value)}>
+                  <option>Unpaid</option>
+                  <option>Partially Paid</option>
+                  <option>Paid</option>
+                </select>
               </div>
             </div>
+            <div className="toggle-row" style={{ marginTop: 16 }}>
+              <div className="toggle-info">
+                <div className="toggle-label">Include Tax/GST</div>
+              </div>
+              <Toggle checked={form.gstEnabled} onChange={v => set('gstEnabled', v)} />
+            </div>
+          </div>
             <div className="toggle-row" style={{ marginTop: 16 }}>
               <div className="toggle-info">
                 <div className="toggle-label">Include Tax/GST</div>
@@ -200,12 +202,24 @@ export default function InvoiceGenerator() {
           <div className="card-title" style={{ marginBottom: 12 }}>Live Summary ({provider.currency})</div>
           <div className="card" style={{ background: '#f9f9f9', marginBottom: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14 }}>
-              <span>Subtotal</span>
-              <span>{formatCurrency(totals.subtotal, provider.currency)}</span>
+              <span>Total Project Amount</span>
+              <span>{formatCurrency(totals.grandTotal, provider.currency)}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 18, borderTop: '1px solid #ddd', paddingTop: 12, marginTop: 12 }}>
-              <span>Total Bill</span>
-              <span>{formatCurrency(totals.total, provider.currency)}</span>
+            {form.type !== 'Full Payment Invoice' && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14, color: 'var(--text-secondary)' }}>
+                  <span>Advance Paid/Req</span>
+                  <span>{formatCurrency(totals.advance, provider.currency)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14, color: 'var(--text-secondary)' }}>
+                  <span>Remaining Due</span>
+                  <span>{formatCurrency(totals.remaining, provider.currency)}</span>
+                </div>
+              </>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 18, borderTop: '1px solid #ddd', paddingTop: 12, marginTop: 12, color: form.status === 'Paid' ? '#10b981' : '#ef4444' }}>
+              <span>{form.type === 'Advance Invoice' ? 'Advance Due' : form.type === 'Final Invoice (Remaining Balance)' ? 'Final Due' : 'Total Due'}</span>
+              <span>{formatCurrency(totals.dueNow, provider.currency)}</span>
             </div>
           </div>
 

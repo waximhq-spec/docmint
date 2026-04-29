@@ -295,36 +295,41 @@ Client: ______________________ (${data.clientName})
 
 export function generateInvoice(data, provider) {
   const {
-    items = [],
-    expenses = [],
+    projectName = '',
+    totalAmount = '',
+    advancePercent = '50',
+    manualAdvance = '',
     invoiceNumber = 'INV-001',
     invoiceDate = new Date(),
     dueDate,
-    type = 'Full Payment',
+    type = 'Full Payment Invoice',
     status = 'Unpaid',
     gstEnabled = false,
     gstRate = 18,
-    discount = 0,
-    advancePaid = 0,
     notes = '',
   } = data;
 
   const currency = provider.currency || 'INR';
-  const subtotalItems = items.reduce((acc, item) => acc + (parseFloat(item.qty) * parseFloat(item.rate) || 0), 0);
-  const subtotalExpenses = expenses.reduce((acc, exp) => acc + (parseFloat(exp.amount) || 0), 0);
-  const subtotal = subtotalItems + subtotalExpenses;
-  
-  const discountAmount = parseFloat(discount) || 0;
-  const afterDiscount = subtotal - discountAmount;
-  
-  const gstAmount = gstEnabled ? (afterDiscount * gstRate) / 100 : 0;
-  const total = afterDiscount + gstAmount;
-  
-  let amountDue = total;
-  if (type === 'Advance Invoice' || type === 'Milestone Invoice') {
-    amountDue = parseFloat(data.advanceRequested) || (total / 2);
-  } else if (type === 'Final Invoice') {
-    amountDue = total - parseFloat(advancePaid);
+  const total = parseFloat(totalAmount) || 0;
+  const gstAmount = gstEnabled ? (total * gstRate) / 100 : 0;
+  const grandTotal = total + gstAmount;
+
+  let advance = 0;
+  if (manualAdvance) {
+    advance = parseFloat(manualAdvance) || 0;
+  } else {
+    advance = (grandTotal * (parseFloat(advancePercent) || 0)) / 100;
+  }
+  const remaining = grandTotal - advance;
+
+  let amountDue = grandTotal;
+  let typeLabel = 'Total Due';
+  if (type === 'Advance Invoice') {
+    amountDue = advance;
+    typeLabel = 'Advance Due';
+  } else if (type === 'Final Invoice (Remaining Balance)') {
+    amountDue = remaining;
+    typeLabel = 'Final Balance Due';
   }
 
   const statusColors = {
@@ -357,6 +362,7 @@ export function generateInvoice(data, provider) {
 # INVOICE ${invoiceNumber}
 **Date:** ${formatDate(new Date(invoiceDate))}
 **Status:** ${status}
+**Type:** ${type}
 
 ---
 
@@ -372,18 +378,24 @@ ${data.email || ''}
 
 ---
 
-## Services:
-${items.map(item => `- ${item.desc} | ${item.qty} x ${formatCurrency(item.rate, currency)} = **${formatCurrency(item.qty * item.rate, currency)}**`).join('\n')}
+## Details:
+**Project Name:** ${projectName || 'Services Rendered'}
+**Total Project Amount:** ${formatCurrency(total, currency)}
+${gstEnabled ? `**GST (${gstRate}%):** ${formatCurrency(gstAmount, currency)}` : ''}
+**Grand Total:** ${formatCurrency(grandTotal, currency)}
 
 ---
 
-## Total:
-- **Subtotal:** ${formatCurrency(subtotal, currency)}
-${discountAmount > 0 ? `- **Discount:** -${formatCurrency(discountAmount, currency)}` : ''}
-${gstEnabled ? `- **GST (${gstRate}%):** ${formatCurrency(gstAmount, currency)}` : ''}
-- **Total:** **${formatCurrency(total, currency)}**
+## Financials:
+${type !== 'Full Payment Invoice' ? `- **Advance Amount:** ${formatCurrency(advance, currency)}\n- **Remaining Balance:** ${formatCurrency(remaining, currency)}` : ''}
 
-### **Balance Due:** **${formatCurrency(amountDue, currency)}**
+### **${typeLabel}:** **${formatCurrency(amountDue, currency)}**
+
+---
+
+**Notes:**
+${notes || 'Payment due within 7 days.'}
+  `.trim();
 
 ---
 
@@ -431,42 +443,34 @@ ${notes || 'Payment due within 7 days.'}
           </div>
         </div>
 
-        <table style="width:100%;border-collapse:collapse;margin-bottom:32px;position:relative;z-index:1;">
-          <thead>
-            <tr style="border-bottom:2px solid #111;">
-              <th style="text-align:left;padding:12px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#888;">Services</th>
-              <th style="text-align:center;padding:12px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#888;width:60px;">Qty</th>
-              <th style="text-align:right;padding:12px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#888;width:120px;">Rate</th>
-              <th style="text-align:right;padding:12px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#888;width:120px;">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${items.map(item => `
-              <tr style="border-bottom:1px solid #e5e5e5;">
-                <td style="padding:16px 8px;font-size:14px;font-weight:500;">${item.desc}</td>
-                <td style="padding:16px 8px;font-size:14px;text-align:center;">${item.qty}</td>
-                <td style="padding:16px 8px;font-size:14px;text-align:right;">${formatCurrency(item.rate, currency)}</td>
-                <td style="padding:16px 8px;font-size:14px;font-weight:700;text-align:right;">${formatCurrency(item.qty * item.rate, currency)}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+        <div style="background:#f9f9f9;padding:24px;border-radius:8px;margin-bottom:32px;position:relative;z-index:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding-bottom:16px;margin-bottom:16px;">
+            <div>
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Project Description</div>
+              <div style="font-size:16px;font-weight:600;">${projectName || 'Services Rendered'}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Total Project Amount</div>
+              <div style="font-size:16px;font-weight:700;">${formatCurrency(total, currency)}</div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Invoice Type</div>
+              <div style="font-size:14px;font-weight:500;">${type}</div>
+            </div>
+          </div>
+        </div>
 
         <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:60px;position:relative;z-index:1;">
           <div>
             ${qrCodeHtml}
           </div>
-          <div style="width:280px;">
+          <div style="width:320px;">
             <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#555;">
-              <span>Subtotal</span>
-              <span>${formatCurrency(subtotal, currency)}</span>
+              <span>Total Project Amount</span>
+              <span>${formatCurrency(total, currency)}</span>
             </div>
-            ${discountAmount > 0 ? `
-              <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#d93025;">
-                <span>Discount</span>
-                <span>-${formatCurrency(discountAmount, currency)}</span>
-              </div>
-            ` : ''}
             ${gstEnabled ? `
               <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#555;">
                 <span>GST (${gstRate}%)</span>
@@ -474,10 +478,21 @@ ${notes || 'Payment due within 7 days.'}
               </div>
             ` : ''}
             <div style="display:flex;justify-content:space-between;padding:12px 0;margin-top:8px;border-top:1px solid #e5e5e5;font-size:15px;font-weight:700;color:#111;">
-              <span>Total</span>
-              <span>${formatCurrency(total, currency)}</span>
+              <span>Grand Total</span>
+              <span>${formatCurrency(grandTotal, currency)}</span>
             </div>
             
+            ${type !== 'Full Payment Invoice' ? `
+              <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;color:#888;font-style:italic;">
+                <span>Advance Required/Paid</span>
+                <span>${formatCurrency(advance, currency)}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;color:#888;font-style:italic;">
+                <span>Remaining Balance</span>
+                <span>${formatCurrency(remaining, currency)}</span>
+              </div>
+            ` : ''}
+
             <div style="display:flex;justify-content:space-between;padding:16px;margin-top:16px;background:#111;border-radius:8px;font-size:18px;font-weight:900;color:#fff;">
               <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;align-self:center;">Balance Due</span>
               <span>${formatCurrency(amountDue, currency)}</span>

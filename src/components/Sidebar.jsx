@@ -16,16 +16,6 @@ const NAV = [
             <rect x="14" y="14" width="7" height="7" rx="1.5"/>
           </svg>
         ),
-      },
-      {
-        id: 'new-project',
-        label: 'New Project',
-        icon: (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M12 5v14M5 12h14"/>
-          </svg>
-        ),
-      },
     ],
   },
   {
@@ -70,7 +60,6 @@ const NAV = [
 
 const PAGE_TITLES = {
   dashboard: { title: 'Dashboard', desc: 'Overview of your agency activity' },
-  'new-project': { title: 'New Project', desc: 'Generate a complete document set' },
   invoice: { title: 'Invoice Generator', desc: 'Create a professional invoice' },
   proposal: { title: 'Proposal Generator', desc: 'Draft a ready-to-send proposal' },
   contract: { title: 'Contract Generator', desc: 'Generate a clean service agreement' },
