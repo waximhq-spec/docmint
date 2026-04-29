@@ -283,7 +283,11 @@ export function generateInvoice(data, provider) {
   } = data;
 
   const currency = provider.currency || 'INR';
-  const total = parseFloat(totalAmount) || 0;
+  const total = (data.lineItems || []).reduce((acc, item) => {
+    const q = parseFloat(item.quantity) || 0;
+    const r = parseFloat(item.rate) || 0;
+    return acc + (q * r);
+  }, 0);
   const gstAmount = gstEnabled ? (total * gstRate) / 100 : 0;
   const grandTotal = total + gstAmount;
 
@@ -323,8 +327,9 @@ export function generateInvoice(data, provider) {
   ` : '';
 
   let qrCodeHtml = '';
-  if (provider.upiId && status !== 'Paid' && currency === 'INR') {
-    const upiLink = `upi://pay?pa=${provider.upiId}&pn=${encodeURIComponent(provider.name)}&am=${amountDue}&cu=INR&tn=${encodeURIComponent('Invoice ' + invoiceNumber)}`;
+  const upiIdToUse = data.upiId;
+  if (upiIdToUse && status !== 'Paid' && currency === 'INR') {
+    const upiLink = `upi://pay?pa=${upiIdToUse}&pn=${encodeURIComponent(data.holderName)}&am=${amountDue}&cu=INR&tn=${encodeURIComponent('Invoice ' + invoiceNumber)}`;
     const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
     qrCodeHtml = `
       <div style="text-align:center;">
@@ -355,8 +360,12 @@ ${data.email || ''}
 ---
 
 ## Details:
-**${descriptionLabel}:**
-${projectName || 'Services Rendered'}
+**Project:** ${projectName || 'Services Rendered'}
+
+| Service | Qty | Rate | Total |
+| :--- | :---: | :---: | :---: |
+${(data.lineItems || []).map(item => `| ${item.description} | ${item.quantity} | ${formatCurrency(item.rate, currency)} | ${formatCurrency((parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0), currency)} |`).join('\n')}
+
 **Total Project Amount:** ${formatCurrency(total, currency)}
 ${gstEnabled ? `**GST (${gstRate}%):** ${formatCurrency(gstAmount, currency)}` : ''}
 **Grand Total:** ${formatCurrency(grandTotal, currency)}
@@ -416,17 +425,30 @@ ${type === 'Advance Invoice' ? 'This is an advance invoice.\n' : ''}${type === '
           </div>
         </div>
 
-        <div style="background:#f9f9f9;padding:20px;border-radius:8px;margin-bottom:24px;position:relative;z-index:1;">
-          <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding-bottom:16px;margin-bottom:16px;">
-            <div>
-              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">${descriptionLabel}</div>
-              <div style="font-size:14px;font-weight:600;white-space:pre-line;max-width:300px;line-height:1.4;">${projectName || 'Services Rendered'}</div>
-            </div>
-            <div style="text-align:right;">
-              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Total Project Amount</div>
-              <div style="font-size:16px;font-weight:700;">${formatCurrency(total, currency)}</div>
-            </div>
-          </div>
+        <div style="margin-bottom:24px;position:relative;z-index:1;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:12px;">Project: <span style="color:#111;text-transform:none;">${projectName || 'Services Rendered'}</span></div>
+          
+          <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+            <thead>
+              <tr style="background:#f7f7f7;">
+                <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase;color:#888;border-bottom:1px solid #eee;">Service Description</th>
+                <th style="text-align:center;padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase;color:#888;border-bottom:1px solid #eee;width:60px;">Qty</th>
+                <th style="text-align:right;padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase;color:#888;border-bottom:1px solid #eee;width:100px;">Rate</th>
+                <th style="text-align:right;padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase;color:#888;border-bottom:1px solid #eee;width:100px;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(data.lineItems || []).map(item => `
+                <tr>
+                  <td style="padding:12px;font-size:13px;border-bottom:1px solid #eee;">${item.description}</td>
+                  <td style="padding:12px;font-size:13px;text-align:center;border-bottom:1px solid #eee;">${item.quantity}</td>
+                  <td style="padding:12px;font-size:13px;text-align:right;border-bottom:1px solid #eee;">${formatCurrency(item.rate, currency)}</td>
+                  <td style="padding:12px;font-size:13px;text-align:right;font-weight:600;border-bottom:1px solid #eee;">${formatCurrency((parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0), currency)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <div>
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Invoice Type</div>
@@ -481,11 +503,12 @@ ${type === 'Advance Invoice' ? 'This is an advance invoice.\n' : ''}${type === '
         <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:40px;padding-top:40px;border-top:1px solid #e5e5e5;position:relative;z-index:1;">
           <div>
             <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:12px;">Payment Info & Terms</div>
-            <div style="font-size:13px;color:#333;margin-bottom:12px;line-height:1.6;">
-              ${provider.bankName ? `<strong>Bank:</strong> ${provider.bankName} · ` : ''}
-              ${provider.accNumber ? `<strong>A/C:</strong> ${provider.accNumber} · ` : ''}
-              ${provider.ifscCode ? `<strong>IFSC:</strong> ${provider.ifscCode}` : ''}
-            </div>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;color:#111;">
+              ${data.bankName ? `<tr><td style="padding:3px 0;width:90px;color:#888;text-transform:uppercase;font-size:9px;font-weight:700;letter-spacing:0.5px;">Bank Name</td><td style="padding:3px 0;font-weight:600;">${data.bankName}</td></tr>` : ''}
+              ${data.holderName ? `<tr><td style="padding:3px 0;width:90px;color:#888;text-transform:uppercase;font-size:9px;font-weight:700;letter-spacing:0.5px;">A/C Holder</td><td style="padding:3px 0;font-weight:600;">${data.holderName}</td></tr>` : ''}
+              ${data.accNumber ? `<tr><td style="padding:3px 0;width:90px;color:#888;text-transform:uppercase;font-size:9px;font-weight:700;letter-spacing:0.5px;">A/C Number</td><td style="padding:3px 0;font-weight:600;">${data.accNumber}</td></tr>` : ''}
+              ${data.ifscCode ? `<tr><td style="padding:3px 0;width:90px;color:#888;text-transform:uppercase;font-size:9px;font-weight:700;letter-spacing:0.5px;">IFSC Code</td><td style="padding:3px 0;font-weight:600;">${data.ifscCode}</td></tr>` : ''}
+            </table>
             <div style="font-size:12px;color:#777;line-height:1.6;white-space:pre-line;">${type === 'Advance Invoice' ? '<strong>This is an advance invoice.</strong>\n' : ''}${type === 'Final Invoice' ? '<strong>This is a final invoice.</strong>\n' : ''}${notes || 'Payment due within 7 days.'}</div>
           </div>
         </div>
