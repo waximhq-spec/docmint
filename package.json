@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^6.0.1",
+    "html2pdf.js": "^0.14.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-markdown": "^10.1.0"

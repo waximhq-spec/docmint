@@ -1,46 +1,44 @@
 import ReactMarkdown from 'react-markdown';
+import html2pdf from 'html2pdf.js';
 
 export default function DocOutput({ type, html, text }) {
-  const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>${type} - docmint</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-            body { 
-              font-family: 'Inter', sans-serif; 
-              padding: 40px; 
-              color: #1a1a1a;
-              line-height: 1.6;
-            }
-            .doc-container { max-width: 800px; margin: 0 auto; }
-            h1, h2, h3 { margin-top: 1.5em; margin-bottom: 0.5em; }
-            p { margin-bottom: 1em; }
-            ul, ol { margin-bottom: 1em; padding-left: 20px; }
-            li { margin-bottom: 0.5em; }
-            hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
-            @media print {
-              body { padding: 0; }
-              .no-print { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="doc-container">
-            ${html}
-          </div>
-          <script>
-            setTimeout(() => {
-              window.print();
-              window.close();
-            }, 500);
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+  const handleExportPDF = () => {
+    const element = document.createElement('div');
+    element.innerHTML = `
+      <div style="font-family: 'Inter', sans-serif; padding: 40px; color: #1a1a1a; line-height: 1.6; max-width: 800px; margin: 0 auto;">
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+          h1, h2, h3 { margin-top: 1.5em; margin-bottom: 0.5em; color: #000; }
+          p { margin-bottom: 1em; }
+          ul, ol { margin-bottom: 1em; padding-left: 20px; }
+          li { margin-bottom: 0.5em; }
+          hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
+          strong { font-weight: 700; color: #000; }
+          .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 28px; border-bottom: 2px solid #000; }
+          .invoice-brand { font-size: 22px; font-weight: 800; }
+          .invoice-meta { text-align: right; }
+          .invoice-number { font-size: 20px; font-weight: 700; }
+          .invoice-table { width: 100%; border-collapse: collapse; margin: 24px 0; }
+          .invoice-table th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 650; text-transform: uppercase; color: #888; background: #f7f7f7; border-bottom: 1px solid #e5e5e5; }
+          .invoice-table td { padding: 14px 14px; border-bottom: 1px solid #e5e5e5; font-size: 13.5px; }
+          .invoice-total-row { display: flex; justify-content: flex-end; margin-top: 20px; }
+          .invoice-total-box { min-width: 220px; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+          .invoice-total-line { display: flex; justify-content: space-between; padding: 10px 16px; font-size: 13px; border-bottom: 1px solid #e5e5e5; }
+          .invoice-total-line:last-child { border-bottom: none; font-weight: 700; background: #f7f7f7; }
+        </style>
+        ${html}
+      </div>
+    `;
+    
+    const opt = {
+      margin:       10,
+      filename:     `${type}_${new Date().toISOString().split('T')[0]}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().from(element).set(opt).save();
   };
 
   const handleCopy = () => {
@@ -60,8 +58,8 @@ export default function DocOutput({ type, html, text }) {
       }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: 1 }}>Preview Mode</div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-secondary" onClick={handleCopy} style={{ padding: '6px 12px', fontSize: 11 }}>Copy Text</button>
-          <button className="btn btn-primary" onClick={handlePrint} style={{ padding: '6px 12px', fontSize: 11 }}>Export PDF</button>
+          <button className="btn btn-ghost btn-sm" onClick={handleCopy}>Copy Text</button>
+          <button className="btn btn-primary btn-sm" onClick={handleExportPDF}>Export PDF</button>
         </div>
       </div>
       
