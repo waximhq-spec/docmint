@@ -28,11 +28,4 @@ export function formatDate(date = new Date()) {
   });
 }
 
-export function agencyInfo() {
-  return {
-    name: 'Creative Agency',
-    address: 'New Delhi, India',
-    email: 'hello@creativeagency.in',
-    phone: '+91 98765 43210',
-  };
-}
+// Utility to format currency and dates

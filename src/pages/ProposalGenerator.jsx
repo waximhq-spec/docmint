@@ -31,6 +31,10 @@ export default function ProposalGenerator() {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [provider, setProvider] = useState(() => {
     const saved = localStorage.getItem('docmint_provider');
+    if (saved && (saved.includes('Wasim') || saved.includes('Cinmach'))) {
+      localStorage.removeItem('docmint_provider');
+      return DEFAULT_PROVIDER;
+    }
     return saved ? JSON.parse(saved) : DEFAULT_PROVIDER;
   });
   const [doc, setDoc] = useState(null);
@@ -61,7 +65,7 @@ export default function ProposalGenerator() {
       projectType: form.serviceType,
       clientName: form.clientName,
       companyName: form.companyName,
-      totalPrice: form.budget.replace(/[^0-9]/g, ''), // Rough estimation for summary
+      totalPrice: form.budget.replace(/[^0-9]/g, ''),
       advancePercent: '50',
       timeline: form.timeline,
       scopeOfWork: form.notes || 'As discussed.',
@@ -76,7 +80,6 @@ export default function ProposalGenerator() {
 
   return (
     <div className="page-body fade-enter">
-      {/* Provider Info */}
       <div className="card">
         <div className="card-title">Provided By</div>
         <div className="form-grid">
@@ -86,7 +89,7 @@ export default function ProposalGenerator() {
               id="prop-prov-name"
               value={provider.name}
               onChange={e => setProv('name', e.target.value)}
-              placeholder="e.g. Wasim Fayaz"
+              placeholder="e.g. Your Name"
             />
           </div>
           <div className="form-group">
@@ -95,7 +98,7 @@ export default function ProposalGenerator() {
               id="prop-prov-email"
               value={provider.email}
               onChange={e => setProv('email', e.target.value)}
-              placeholder="your@email.com"
+              placeholder="name@email.com"
             />
           </div>
         </div>
@@ -110,7 +113,7 @@ export default function ProposalGenerator() {
               id="prop-client"
               value={form.clientName}
               onChange={e => set('clientName', e.target.value)}
-              placeholder="e.g. Priya Singh"
+              placeholder="Enter client name"
               style={errors.clientName ? { borderColor: '#c00' } : {}}
             />
             {errors.clientName && <span style={{ color: '#c00', fontSize: 11 }}>{errors.clientName}</span>}
@@ -136,7 +139,7 @@ export default function ProposalGenerator() {
               id="prop-budget"
               value={form.budget}
               onChange={e => set('budget', e.target.value)}
-              placeholder="e.g. ₹50,000"
+              placeholder="Enter amount"
               style={errors.budget ? { borderColor: '#c00' } : {}}
             />
             {errors.budget && <span style={{ color: '#c00', fontSize: 11 }}>{errors.budget}</span>}
@@ -147,7 +150,7 @@ export default function ProposalGenerator() {
               id="prop-timeline"
               value={form.timeline}
               onChange={e => set('timeline', e.target.value)}
-              placeholder="e.g. 3 weeks"
+              placeholder="e.g. 1 month"
               style={errors.timeline ? { borderColor: '#c00' } : {}}
             />
             {errors.timeline && <span style={{ color: '#c00', fontSize: 11 }}>{errors.timeline}</span>}

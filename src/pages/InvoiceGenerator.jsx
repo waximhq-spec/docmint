@@ -22,6 +22,10 @@ export default function InvoiceGenerator() {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [provider, setProvider] = useState(() => {
     const saved = localStorage.getItem('docmint_provider');
+    if (saved && (saved.includes('Wasim') || saved.includes('Cinmach'))) {
+      localStorage.removeItem('docmint_provider');
+      return DEFAULT_PROVIDER;
+    }
     return saved ? JSON.parse(saved) : DEFAULT_PROVIDER;
   });
   const [doc, setDoc] = useState(null);
@@ -48,14 +52,13 @@ export default function InvoiceGenerator() {
     if (!validate()) return;
     const invNum = getNextInvoiceNumber();
     
-    // We repurpose the project generator for standalone use
     const projectData = {
       projectTitle: form.serviceDesc,
       projectType: 'Service',
       clientName: form.clientName,
       companyName: form.companyName,
       totalPrice: form.amount,
-      advancePercent: '100', // Standalone is usually 100%
+      advancePercent: '100',
       email: '',
     };
 
@@ -65,7 +68,6 @@ export default function InvoiceGenerator() {
 
   return (
     <div className="page-body fade-enter">
-      {/* Provider Info */}
       <div className="card">
         <div className="card-title">Provided By</div>
         <div className="form-grid">
@@ -75,7 +77,7 @@ export default function InvoiceGenerator() {
               id="inv-prov-name"
               value={provider.name}
               onChange={e => setProv('name', e.target.value)}
-              placeholder="e.g. Wasim Fayaz"
+              placeholder="e.g. Agency Name"
             />
           </div>
           <div className="form-group">
@@ -84,7 +86,7 @@ export default function InvoiceGenerator() {
               id="inv-prov-email"
               value={provider.email}
               onChange={e => setProv('email', e.target.value)}
-              placeholder="your@email.com"
+              placeholder="name@email.com"
             />
           </div>
         </div>
@@ -99,7 +101,7 @@ export default function InvoiceGenerator() {
               id="inv-clientName"
               value={form.clientName}
               onChange={e => set('clientName', e.target.value)}
-              placeholder="e.g. Rahul Verma"
+              placeholder="Enter client name"
               style={errors.clientName ? { borderColor: '#c00' } : {}}
             />
             {errors.clientName && <span style={{ color: '#c00', fontSize: 11 }}>{errors.clientName}</span>}
@@ -120,7 +122,7 @@ export default function InvoiceGenerator() {
               rows={2}
               value={form.serviceDesc}
               onChange={e => set('serviceDesc', e.target.value)}
-              placeholder="e.g. Brand Film Production — March 2025"
+              placeholder="e.g. Design Services — March 2025"
               style={errors.serviceDesc ? { borderColor: '#c00' } : {}}
             />
             {errors.serviceDesc && <span style={{ color: '#c00', fontSize: 11 }}>{errors.serviceDesc}</span>}
@@ -132,7 +134,7 @@ export default function InvoiceGenerator() {
               type="number"
               value={form.amount}
               onChange={e => set('amount', e.target.value)}
-              placeholder="e.g. 50000"
+              placeholder="Enter amount"
               style={errors.amount ? { borderColor: '#c00' } : {}}
             />
             {errors.amount && <span style={{ color: '#c00', fontSize: 11 }}>{errors.amount}</span>}

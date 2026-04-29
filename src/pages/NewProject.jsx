@@ -37,7 +37,12 @@ const DEFAULT_FORM = {
 export default function NewProject() {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [provider, setProvider] = useState(() => {
+    // If the saved provider contains "Wasim", we force clear it to be blank
     const saved = localStorage.getItem('docmint_provider');
+    if (saved && (saved.includes('Wasim') || saved.includes('Cinmach'))) {
+      localStorage.removeItem('docmint_provider');
+      return DEFAULT_PROVIDER;
+    }
     return saved ? JSON.parse(saved) : DEFAULT_PROVIDER;
   });
   
@@ -115,7 +120,7 @@ export default function NewProject() {
               id="np-prov-name"
               value={provider.name}
               onChange={e => setProv('name', e.target.value)}
-              placeholder="e.g. Wasim Fayaz or Cinmach Productions"
+              placeholder="e.g. Your Name or Agency Name"
               style={errors.providerName ? { borderColor: '#c00' } : {}}
             />
           </div>
@@ -125,7 +130,7 @@ export default function NewProject() {
               id="np-prov-email"
               value={provider.email}
               onChange={e => setProv('email', e.target.value)}
-              placeholder="your@email.com"
+              placeholder="name@email.com"
             />
           </div>
           <div className="form-group full">
@@ -134,7 +139,7 @@ export default function NewProject() {
               id="np-prov-address"
               value={provider.address}
               onChange={e => setProv('address', e.target.value)}
-              placeholder="e.g. Kashmir, India"
+              placeholder="e.g. City, Country"
             />
           </div>
         </div>
@@ -150,7 +155,7 @@ export default function NewProject() {
               id="np-clientName"
               value={form.clientName}
               onChange={e => set('clientName', e.target.value)}
-              placeholder="e.g. Aryan Sharma"
+              placeholder="Enter client name"
               style={errors.clientName ? { borderColor: '#c00' } : {}}
             />
             {errors.clientName && <span style={{ color: '#c00', fontSize: 11 }}>{errors.clientName}</span>}
@@ -161,7 +166,7 @@ export default function NewProject() {
               id="np-companyName"
               value={form.companyName}
               onChange={e => set('companyName', e.target.value)}
-              placeholder="e.g. TechNova Solutions"
+              placeholder="Optional"
             />
           </div>
           <div className="form-group">
@@ -171,7 +176,7 @@ export default function NewProject() {
               type="email"
               value={form.email}
               onChange={e => set('email', e.target.value)}
-              placeholder="client@example.com"
+              placeholder="client@email.com"
             />
           </div>
         </div>
@@ -193,7 +198,7 @@ export default function NewProject() {
               id="np-projectTitle"
               value={form.projectTitle}
               onChange={e => set('projectTitle', e.target.value)}
-              placeholder="e.g. Brand Campaign Video 2025"
+              placeholder="e.g. Website Redesign"
               style={errors.projectTitle ? { borderColor: '#c00' } : {}}
             />
             {errors.projectTitle && <span style={{ color: '#c00', fontSize: 11 }}>{errors.projectTitle}</span>}
@@ -235,7 +240,7 @@ export default function NewProject() {
               type="number"
               value={form.totalPrice}
               onChange={e => set('totalPrice', e.target.value)}
-              placeholder="e.g. 75000"
+              placeholder="Enter amount"
               style={errors.totalPrice ? { borderColor: '#c00' } : {}}
             />
             {errors.totalPrice && <span style={{ color: '#c00', fontSize: 11 }}>{errors.totalPrice}</span>}

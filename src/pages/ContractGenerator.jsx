@@ -20,6 +20,10 @@ export default function ContractGenerator() {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [provider, setProvider] = useState(() => {
     const saved = localStorage.getItem('docmint_provider');
+    if (saved && (saved.includes('Wasim') || saved.includes('Cinmach'))) {
+      localStorage.removeItem('docmint_provider');
+      return DEFAULT_PROVIDER;
+    }
     return saved ? JSON.parse(saved) : DEFAULT_PROVIDER;
   });
   const [doc, setDoc] = useState(null);
@@ -61,7 +65,6 @@ export default function ContractGenerator() {
 
   return (
     <div className="page-body fade-enter">
-      {/* Provider Info */}
       <div className="card">
         <div className="card-title">Provided By</div>
         <div className="form-grid">
@@ -71,7 +74,7 @@ export default function ContractGenerator() {
               id="cont-prov-name"
               value={provider.name}
               onChange={e => setProv('name', e.target.value)}
-              placeholder="e.g. Wasim Fayaz"
+              placeholder="e.g. Your Name"
             />
           </div>
           <div className="form-group">
@@ -80,7 +83,7 @@ export default function ContractGenerator() {
               id="cont-prov-email"
               value={provider.email}
               onChange={e => setProv('email', e.target.value)}
-              placeholder="your@email.com"
+              placeholder="name@email.com"
             />
           </div>
         </div>
@@ -95,7 +98,7 @@ export default function ContractGenerator() {
               id="cont-client"
               value={form.clientName}
               onChange={e => set('clientName', e.target.value)}
-              placeholder="e.g. Rahul Sharma"
+              placeholder="Enter client name"
               style={errors.clientName ? { borderColor: '#c00' } : {}}
             />
             {errors.clientName && <span style={{ color: '#c00', fontSize: 11 }}>{errors.clientName}</span>}
@@ -115,7 +118,7 @@ export default function ContractGenerator() {
               id="cont-title"
               value={form.projectTitle}
               onChange={e => set('projectTitle', e.target.value)}
-              placeholder="e.g. Website Redesign"
+              placeholder="e.g. Project Title"
               style={errors.projectTitle ? { borderColor: '#c00' } : {}}
             />
             {errors.projectTitle && <span style={{ color: '#c00', fontSize: 11 }}>{errors.projectTitle}</span>}
@@ -126,7 +129,7 @@ export default function ContractGenerator() {
               id="cont-price"
               value={form.totalPrice}
               onChange={e => set('totalPrice', e.target.value)}
-              placeholder="e.g. 50000"
+              placeholder="Enter amount"
               style={errors.totalPrice ? { borderColor: '#c00' } : {}}
             />
             {errors.totalPrice && <span style={{ color: '#c00', fontSize: 11 }}>{errors.totalPrice}</span>}
