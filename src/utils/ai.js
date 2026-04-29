@@ -3,6 +3,24 @@ const MODELS = [
   "minimax/minimax-m2.5:free"
 ];
 
+/**
+ * Strips all markdown-style formatting symbols (**, *, ###, etc.)
+ * to provide perfectly clean text for textareas.
+ */
+function cleanFormatting(text) {
+  if (!text) return "";
+  return text
+    .replace(/\*\*\*/g, "") // Remove triple stars
+    .replace(/\*\*/g, "")    // Remove double stars (bold)
+    .replace(/\*/g, "")      // Remove single stars (italic)
+    .replace(/###/g, "")     // Remove H3
+    .replace(/##/g, "")      // Remove H2
+    .replace(/#/g, "")       // Remove H1
+    .replace(/__/g, "")      // Remove double underscores
+    .replace(/`/g, "")       // Remove backticks
+    .trim();
+}
+
 export async function generateWithAI(prompt) {
   for (const model of MODELS) {
     try {
@@ -19,7 +37,7 @@ export async function generateWithAI(prompt) {
           messages: [
             {
               role: "system",
-              content: "You are a professional creative agency assistant. Generate content that is clean, structured, and easy to read. Use bullet points for lists. Avoid excessive Markdown symbols like triple asterisks. Use double asterisks for bold headers only. No conversational filler."
+              content: "You are a professional creative agency assistant. Provide PLAIN TEXT ONLY. Do not use any markdown formatting, asterisks, or bold symbols. Just use clear, professional English and normal bullet points (-)."
             },
             { 
               role: "user", 
@@ -32,10 +50,8 @@ export async function generateWithAI(prompt) {
       const data = await response.json();
 
       if (response.ok && data.choices?.[0]?.message?.content) {
-        // Post-process to remove triple asterisks or strange AI formatting artifacts
-        let content = data.choices[0].message.content;
-        content = content.replace(/\*\*\*/g, '**'); // Convert *** to **
-        return content.trim();
+        // Return perfectly cleaned text
+        return cleanFormatting(data.choices[0].message.content);
       }
       
       console.warn(`Model ${model} failed or busy, trying next...`);
@@ -44,5 +60,5 @@ export async function generateWithAI(prompt) {
     }
   }
 
-  return "AI unavailable. Using default template.";
+  return "AI unavailable. Please try again.";
 }
