@@ -378,10 +378,10 @@ ${type === 'Advance Invoice' ? 'This is an advance invoice.\n' : ''}${type === '
 
   return {
     html: `
-      <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;padding:40px;position:relative;background:#fff;">
+      <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;padding:24px;position:relative;background:#fff;">
         ${watermarkHtml}
         
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:60px;position:relative;z-index:1;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;position:relative;z-index:1;">
           <div>
             <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:8px;">Invoice From</div>
             <div style="font-size:22px;font-weight:900;letter-spacing:-0.5px;margin-bottom:4px;">${provider.name}</div>
@@ -397,7 +397,7 @@ ${type === 'Advance Invoice' ? 'This is an advance invoice.\n' : ''}${type === '
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-bottom:60px;position:relative;z-index:1;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-bottom:32px;position:relative;z-index:1;">
           <div>
             <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:12px;">Bill To</div>
             <div style="font-size:16px;font-weight:700;">${data.clientName}</div>
@@ -416,7 +416,7 @@ ${type === 'Advance Invoice' ? 'This is an advance invoice.\n' : ''}${type === '
           </div>
         </div>
 
-        <div style="background:#f9f9f9;padding:24px;border-radius:8px;margin-bottom:32px;position:relative;z-index:1;">
+        <div style="background:#f9f9f9;padding:20px;border-radius:8px;margin-bottom:24px;position:relative;z-index:1;">
           <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding-bottom:16px;margin-bottom:16px;">
             <div>
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">${descriptionLabel}</div>
@@ -435,7 +435,7 @@ ${type === 'Advance Invoice' ? 'This is an advance invoice.\n' : ''}${type === '
           </div>
         </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:60px;position:relative;z-index:1;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:30px;position:relative;z-index:1;">
           <div>
             ${qrCodeHtml}
           </div>
@@ -465,7 +465,7 @@ ${type === 'Advance Invoice' ? 'This is an advance invoice.\n' : ''}${type === '
               </div>
             ` : ''}
 
-            <div style="display:flex;justify-content:space-between;padding:16px;margin-top:16px;background:#111;border-radius:8px;font-size:18px;font-weight:900;color:#fff;">
+            <div style="display:flex;justify-content:space-between;padding:12px 16px;margin-top:12px;background:#111;border-radius:8px;font-size:16px;font-weight:900;color:#fff;">
               <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;align-self:center;">${typeLabel}</span>
               <span>${formatCurrency(amountDue, currency)}</span>
             </div>

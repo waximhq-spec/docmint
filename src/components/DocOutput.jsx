@@ -5,25 +5,25 @@ export default function DocOutput({ type, html, text }) {
   const handleExportPDF = () => {
     const element = document.createElement('div');
     element.innerHTML = `
-      <div style="font-family: 'Inter', sans-serif; padding: 40px; color: #1a1a1a; line-height: 1.6; max-width: 800px; margin: 0 auto;">
+      <div style="font-family: 'Inter', sans-serif; padding: 20px; color: #1a1a1a; line-height: 1.5; max-width: 800px; margin: 0 auto;">
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-          h1, h2, h3 { margin-top: 1.5em; margin-bottom: 0.5em; color: #000; }
-          p { margin-bottom: 1em; }
-          ul, ol { margin-bottom: 1em; padding-left: 20px; }
-          li { margin-bottom: 0.5em; }
-          hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
+          h1, h2, h3 { margin-top: 1em; margin-bottom: 0.4em; color: #000; }
+          p { margin-bottom: 0.8em; }
+          ul, ol { margin-bottom: 0.8em; padding-left: 20px; }
+          li { margin-bottom: 0.3em; }
+          hr { border: 0; border-top: 1px solid #eee; margin: 15px 0; }
           strong { font-weight: 700; color: #000; }
-          .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 28px; border-bottom: 2px solid #000; }
-          .invoice-brand { font-size: 22px; font-weight: 800; }
+          .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #000; }
+          .invoice-brand { font-size: 20px; font-weight: 800; }
           .invoice-meta { text-align: right; }
-          .invoice-number { font-size: 20px; font-weight: 700; }
-          .invoice-table { width: 100%; border-collapse: collapse; margin: 24px 0; }
-          .invoice-table th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 650; text-transform: uppercase; color: #888; background: #f7f7f7; border-bottom: 1px solid #e5e5e5; }
-          .invoice-table td { padding: 14px 14px; border-bottom: 1px solid #e5e5e5; font-size: 13.5px; }
-          .invoice-total-row { display: flex; justify-content: flex-end; margin-top: 20px; }
-          .invoice-total-box { min-width: 220px; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
-          .invoice-total-line { display: flex; justify-content: space-between; padding: 10px 16px; font-size: 13px; border-bottom: 1px solid #e5e5e5; }
+          .invoice-number { font-size: 18px; font-weight: 700; }
+          .invoice-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          .invoice-table th { text-align: left; padding: 8px 12px; font-size: 10px; font-weight: 650; text-transform: uppercase; color: #888; background: #f7f7f7; border-bottom: 1px solid #e5e5e5; }
+          .invoice-table td { padding: 10px 12px; border-bottom: 1px solid #e5e5e5; font-size: 12px; }
+          .invoice-total-row { display: flex; justify-content: flex-end; margin-top: 15px; }
+          .invoice-total-box { min-width: 200px; border: 1px solid #e5e5e5; border-radius: 8px; overflow: hidden; }
+          .invoice-total-line { display: flex; justify-content: space-between; padding: 8px 14px; font-size: 12px; border-bottom: 1px solid #e5e5e5; }
           .invoice-total-line:last-child { border-bottom: none; font-weight: 700; background: #f7f7f7; }
         </style>
         ${html}
@@ -31,10 +31,10 @@ export default function DocOutput({ type, html, text }) {
     `;
     
     const opt = {
-      margin:       10,
+      margin:       [10, 10, 10, 10],
       filename:     `${type}_${new Date().toISOString().split('T')[0]}.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
+      html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
