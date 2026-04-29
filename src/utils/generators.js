@@ -156,83 +156,143 @@ export function generateContract(data, provider) {
   };
 }
 
-export function generateInvoice(data, type = 'advance', invoiceNumber, provider) {
-  const total = parseFloat(data.totalPrice) || 0;
-  const advancePercent = parseFloat(data.advancePercent) || 50;
-  const advance = (total * advancePercent) / 100;
-  const remaining = total - advance;
-  const amount = type === 'advance' ? advance : remaining;
-  const label = type === 'advance'
-    ? `Advance Payment (${advancePercent}%)`
-    : `Final Payment (${100 - advancePercent}%)`;
-  const dueDate = new Date();
-  dueDate.setDate(dueDate.getDate() + 7);
+export function generateInvoice(data, provider) {
+  const {
+    items = [],
+    invoiceNumber = 'INV-001',
+    invoiceDate = new Date(),
+    dueDate,
+    type = 'Full Payment',
+    status = 'Unpaid',
+    gstEnabled = false,
+    gstRate = 18,
+    advancePaid = 0,
+    notes = '',
+  } = data;
+
+  const subtotal = items.reduce((acc, item) => acc + (parseFloat(item.qty) * parseFloat(item.rate) || 0), 0);
+  const gstAmount = gstEnabled ? (subtotal * gstRate) / 100 : 0;
+  const total = subtotal + gstAmount;
+  
+  let amountDue = total;
+  let summaryLabel = 'Total Amount';
+  
+  if (type === 'Advance Invoice') {
+    amountDue = parseFloat(data.advanceRequested) || (total / 2);
+    summaryLabel = 'Advance Requested';
+  } else if (type === 'Final Invoice') {
+    amountDue = total - parseFloat(advancePaid);
+    summaryLabel = 'Remaining Balance';
+  }
+
+  const statusColors = {
+    'Paid': { bg: '#e6f4ea', text: '#1e8e3e' },
+    'Partially Paid': { bg: '#fef7e0', text: '#b06000' },
+    'Unpaid': { bg: '#fce8e6', text: '#d93025' },
+    'Due': { bg: '#fce8e6', text: '#d93025' },
+  };
+  const sColor = statusColors[status] || statusColors['Unpaid'];
 
   return {
     html: `
-      <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px;padding-bottom:24px;border-bottom:2px solid #111;">
+      <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;padding:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:48px;">
           <div>
-            <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">${provider.name}</div>
-            ${provider.address ? `<div style="font-size:13px;color:#888;">${provider.address}</div>` : ''}
-            <div style="font-size:13px;color:#888;">${provider.email}</div>
+            <h1 style="font-size:28px;font-weight:900;letter-spacing:-1px;margin-bottom:8px;text-transform:uppercase;">Invoice</h1>
+            <div style="display:inline-block;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;background:${sColor.bg};color:${sColor.text};">
+              ${status}
+            </div>
           </div>
           <div style="text-align:right;">
-            <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:4px;">${type === 'advance' ? 'Advance Invoice' : 'Final Invoice'}</div>
-            <div style="font-size:24px;font-weight:800;letter-spacing:-0.5px;">${invoiceNumber}</div>
-            <div style="font-size:13px;color:#888;margin-top:4px;">Date: ${formatDate()}</div>
-            <div style="font-size:13px;color:#888;">Due: ${formatDate(dueDate)}</div>
+            <div style="font-size:20px;font-weight:800;letter-spacing:-0.5px;">${invoiceNumber}</div>
+            <div style="font-size:13px;color:#888;margin-top:4px;">Date: ${formatDate(new Date(invoiceDate))}</div>
+            <div style="font-size:13px;color:#888;">Due: ${dueDate ? formatDate(new Date(dueDate)) : 'Upon Receipt'}</div>
           </div>
         </div>
 
-        <div style="margin-bottom:32px;">
-          <div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:8px;">Bill To</div>
-          <div style="font-size:15px;font-weight:700;">${data.clientName}</div>
-          ${data.companyName ? `<div style="font-size:14px;color:#555;">${data.companyName}</div>` : ''}
-          ${data.email ? `<div style="font-size:13px;color:#888;">${data.email}</div>` : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-bottom:48px;">
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">From</div>
+            <div style="font-size:15px;font-weight:700;">${provider.name}</div>
+            <div style="font-size:13px;color:#555;margin-top:4px;line-height:1.5;white-space:pre-line;">${provider.address || ''}</div>
+            <div style="font-size:13px;color:#555;margin-top:4px;">${provider.email}</div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">Bill To</div>
+            <div style="font-size:15px;font-weight:700;">${data.clientName}</div>
+            <div style="font-size:13px;color:#555;margin-top:4px;line-height:1.5;">${data.companyName || ''}</div>
+            <div style="font-size:13px;color:#555;margin-top:4px;">${data.email || ''}</div>
+          </div>
         </div>
 
-        <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+        <table style="width:100%;border-collapse:collapse;margin-bottom:32px;">
           <thead>
-            <tr style="background:#f7f7f7;">
-              <th style="text-align:left;padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:#888;border-bottom:1px solid #e5e5e5;">Description</th>
-              <th style="text-align:right;padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:#888;border-bottom:1px solid #e5e5e5;">Amount</th>
+            <tr style="border-bottom:2px solid #111;">
+              <th style="text-align:left;padding:12px 8px;font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:#888;">Description</th>
+              <th style="text-align:center;padding:12px 8px;font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:#888;width:60px;">Qty</th>
+              <th style="text-align:right;padding:12px 8px;font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:#888;width:120px;">Rate</th>
+              <th style="text-align:right;padding:12px 8px;font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:#888;width:120px;">Amount</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td style="padding:16px;border-bottom:1px solid #e5e5e5;">
-                <div style="font-weight:600;">${data.projectTitle}</div>
-                <div style="font-size:12px;color:#888;margin-top:3px;">${data.projectType} · ${label}</div>
-              </td>
-              <td style="padding:16px;border-bottom:1px solid #e5e5e5;text-align:right;">${formatCurrency(amount)}</td>
-            </tr>
+            ${items.map(item => `
+              <tr style="border-bottom:1px solid #e5e5e5;">
+                <td style="padding:16px 8px;font-size:14px;font-weight:500;">${item.desc}</td>
+                <td style="padding:16px 8px;font-size:14px;text-align:center;">${item.qty}</td>
+                <td style="padding:16px 8px;font-size:14px;text-align:right;">${formatCurrency(item.rate)}</td>
+                <td style="padding:16px 8px;font-size:14px;font-weight:600;text-align:right;">${formatCurrency(item.qty * item.rate)}</td>
+              </tr>
+            `).join('')}
           </tbody>
         </table>
 
-        <div style="display:flex;justify-content:flex-end;margin-bottom:40px;">
-          <div style="width:240px;border:1px solid #e5e5e5;border-radius:10px;overflow:hidden;">
-            <div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e5e5e5;">
-              <span style="font-size:13px;color:#555;">Project Total</span>
-              <span style="font-size:13px;">${formatCurrency(total)}</span>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:48px;">
+          <div style="width:280px;">
+            <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#555;">
+              <span>Subtotal</span>
+              <span>${formatCurrency(subtotal)}</span>
             </div>
-            <div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e5e5e5;">
-              <span style="font-size:13px;color:#555;">${label}</span>
-              <span style="font-size:13px;">${formatCurrency(amount)}</span>
+            ${gstEnabled ? `
+              <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#555;">
+                <span>GST (${gstRate}%)</span>
+                <span>${formatCurrency(gstAmount)}</span>
+              </div>
+            ` : ''}
+            <div style="display:flex;justify-content:space-between;padding:12px 0;margin-top:8px;border-top:1px solid #e5e5e5;font-size:15px;font-weight:700;color:#111;">
+              <span>Total</span>
+              <span>${formatCurrency(total)}</span>
             </div>
-            <div style="display:flex;justify-content:space-between;padding:14px 16px;background:#f7f7f7;">
-              <span style="font-size:14px;font-weight:700;">Amount Due</span>
-              <span style="font-size:14px;font-weight:700;">${formatCurrency(amount)}</span>
+            
+            ${type !== 'Full Payment' ? `
+              <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#555;">
+                <span>${type === 'Advance Invoice' ? 'Requested' : 'Advance Paid'}</span>
+                <span>${formatCurrency(type === 'Advance Invoice' ? amountDue : advancePaid)}</span>
+              </div>
+            ` : ''}
+
+            <div style="display:flex;justify-content:space-between;padding:16px 12px;margin-top:12px;background:#111;border-radius:8px;font-size:16px;font-weight:800;color:#fff;">
+              <span>Amount Due</span>
+              <span>${formatCurrency(amountDue)}</span>
             </div>
           </div>
         </div>
 
-        <div style="border-top:1px solid #e5e5e5;padding-top:24px;">
-          <p style="font-size:13px;color:#888;line-height:1.7;">Thank you for your business. For payment details or queries, contact ${provider.name} at ${provider.email}.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;padding-top:32px;border-top:1px solid #e5e5e5;">
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">Payment Details</div>
+            ${provider.bankName ? `<div style="font-size:13px;margin-bottom:4px;"><strong>Bank:</strong> ${provider.bankName}</div>` : ''}
+            ${provider.accNumber ? `<div style="font-size:13px;margin-bottom:4px;"><strong>A/C:</strong> ${provider.accNumber}</div>` : ''}
+            ${provider.upiId ? `<div style="font-size:13px;margin-bottom:4px;"><strong>UPI:</strong> ${provider.upiId}</div>` : ''}
+            ${provider.ifscCode ? `<div style="font-size:13px;"><strong>IFSC:</strong> ${provider.ifscCode}</div>` : ''}
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">Notes & Terms</div>
+            <div style="font-size:13px;color:#555;line-height:1.6;white-space:pre-line;">${notes || 'Payment due within 7 days.\nThank you for your business.'}</div>
+          </div>
         </div>
       </div>
     `,
-    text: `INVOICE ${invoiceNumber}\n\nBill To: ${data.clientName}\nService: ${data.projectTitle}\n${label}: ${formatCurrency(amount)}\n\nDue: ${formatDate(dueDate)}`
+    text: `INVOICE ${invoiceNumber}\n\nStatus: ${status}\nTotal: ${formatCurrency(total)}\nAmount Due: ${formatCurrency(amountDue)}`
   };
 }
 
