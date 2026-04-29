@@ -175,14 +175,11 @@ export function generateInvoice(data, provider) {
   const total = subtotal + gstAmount;
   
   let amountDue = total;
-  let summaryLabel = 'Total Amount';
   
   if (type === 'Advance Invoice') {
     amountDue = parseFloat(data.advanceRequested) || (total / 2);
-    summaryLabel = 'Advance Requested';
   } else if (type === 'Final Invoice') {
     amountDue = total - parseFloat(advancePaid);
-    summaryLabel = 'Remaining Balance';
   }
 
   const statusColors = {
@@ -192,6 +189,20 @@ export function generateInvoice(data, provider) {
     'Due': { bg: '#fce8e6', text: '#d93025' },
   };
   const sColor = statusColors[status] || statusColors['Unpaid'];
+
+  // UPI QR Code logic
+  let qrCodeHtml = '';
+  if (provider.upiId) {
+    const upiLink = `upi://pay?pa=${provider.upiId}&pn=${encodeURIComponent(provider.name)}&am=${amountDue}&cu=INR&tn=${encodeURIComponent('Invoice ' + invoiceNumber)}`;
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
+    qrCodeHtml = `
+      <div style="text-align:center;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:8px;">Scan to Pay (UPI)</div>
+        <img src="${qrApiUrl}" width="120" height="120" style="border:1px solid #e5e5e5;padding:8px;border-radius:12px;background:#fff;" alt="UPI QR Code" />
+        <div style="font-size:12px;font-weight:600;margin-top:6px;color:#111;">${provider.upiId}</div>
+      </div>
+    `;
+  }
 
   return {
     html: `
@@ -246,7 +257,10 @@ export function generateInvoice(data, provider) {
           </tbody>
         </table>
 
-        <div style="display:flex;justify-content:flex-end;margin-bottom:48px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:48px;">
+          <div style="width:150px;">
+            ${qrCodeHtml}
+          </div>
           <div style="width:280px;">
             <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#555;">
               <span>Subtotal</span>
@@ -282,7 +296,7 @@ export function generateInvoice(data, provider) {
             <div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">Payment Details</div>
             ${provider.bankName ? `<div style="font-size:13px;margin-bottom:4px;"><strong>Bank:</strong> ${provider.bankName}</div>` : ''}
             ${provider.accNumber ? `<div style="font-size:13px;margin-bottom:4px;"><strong>A/C:</strong> ${provider.accNumber}</div>` : ''}
-            ${provider.upiId ? `<div style="font-size:13px;margin-bottom:4px;"><strong>UPI:</strong> ${provider.upiId}</div>` : ''}
+            ${provider.upiId ? `<div style="font-size:13px;margin-bottom:4px;"><strong>UPI ID:</strong> ${provider.upiId}</div>` : ''}
             ${provider.ifscCode ? `<div style="font-size:13px;"><strong>IFSC:</strong> ${provider.ifscCode}</div>` : ''}
           </div>
           <div>
