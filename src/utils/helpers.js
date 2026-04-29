@@ -11,8 +11,18 @@ export function peekInvoiceNumber() {
   return `INV-${String(current + 1).padStart(3, '0')}`;
 }
 
-export function formatCurrency(amount) {
+export function formatCurrency(amount, currency = 'INR') {
   const num = parseFloat(amount) || 0;
+  
+  // Custom handling for BHD which uses 3 decimal places
+  if (currency === 'BHD') {
+    return new Intl.NumberFormat('en-BH', {
+      style: 'currency',
+      currency: 'BHD',
+      minimumFractionDigits: 3,
+    }).format(num);
+  }
+
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
