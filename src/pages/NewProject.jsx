@@ -8,6 +8,7 @@ import {
   generateInvoice,
 } from '../utils/generators';
 import { getNextInvoiceNumber, peekInvoiceNumber } from '../utils/helpers';
+import { generateWithAI } from '../utils/ai';
 
 const PROJECT_TYPES = [
   'Video Production',
@@ -37,11 +38,12 @@ const DEFAULT_FORM = {
   timeline: '',
   totalPrice: '',
   advancePercent: '50',
-  revisions: '2',
+  revisions: '',
 };
 
 export default function NewProject() {
   const [form, setForm] = useState(DEFAULT_FORM);
+  const [loadingAI, setLoadingAI] = useState(null);
   const [provider, setProvider] = useState(() => {
     const saved = localStorage.getItem('docmint_provider');
     return saved ? JSON.parse(saved) : DEFAULT_PROVIDER;
@@ -50,8 +52,13 @@ export default function NewProject() {
   const [docs, setDocs] = useState(null);
 
   useEffect(() => {
-    localStorage.setItem('docmint_provider', JSON.stringify(provider));
-  }, [provider]);
+    const syncSettings = () => {
+      const saved = localStorage.getItem('docmint_provider');
+      if (saved) setProvider(JSON.parse(saved));
+    };
+    window.addEventListener('storage', syncSettings);
+    return () => window.removeEventListener('storage', syncSettings);
+  }, []);
 
   useEffect(() => {
     if (form.clientName && form.projectTitle && form.totalPrice) {
@@ -60,7 +67,25 @@ export default function NewProject() {
   }, [form, provider]);
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
-  const setProv = (key, val) => setProvider(p => ({ ...p, [key]: val }));
+
+  const handleAIScope = async () => {
+    setLoadingAI('scope');
+    const prompt = `Draft a professional scope of work for a ${form.projectType} project titled "${form.projectTitle}". 
+    Budget: ${provider.currency} ${form.totalPrice}. Goal: ${form.projectGoal}.
+    Keep it in clear phases/bullet points suitable for an agency proposal.`;
+    const result = await generateWithAI(prompt);
+    set('scopeOfWork', result);
+    setLoadingAI(null);
+  };
+
+  const handleAIRewrite = async (field, currentText) => {
+    if (!currentText) return;
+    setLoadingAI(field);
+    const prompt = `Rewrite this for a professional agency document to be more premium and clear: "${currentText}"`;
+    const result = await generateWithAI(prompt);
+    set(field, result);
+    setLoadingAI(null);
+  };
 
   const handleGenerate = () => {
     const advInvNum = peekInvoiceNumber();
@@ -97,24 +122,10 @@ export default function NewProject() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           
           <div className="card">
-            <div className="card-title">1. Your Identity & Currency</div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Currency</label>
-                <select value={provider.currency} onChange={e => setProv('currency', e.target.value)}>
-                  <option value="INR">INR (₹)</option>
-                  <option value="BHD">BHD (.د.ب)</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Name / Agency</label>
-                <input value={provider.name} onChange={e => setProv('name', e.target.value)} placeholder="Your Name" />
-              </div>
-              <div className="form-group full">
-                <label>Smart Address Search</label>
-                <LocationInput value={provider.address} onChange={val => setProv('address', val)} />
-              </div>
-            </div>
+            <div className="card-title">1. Global Settings</div>
+            <p style={{ fontSize: 12, color: '#888' }}>
+              <strong>{provider.name || 'Your Agency'}</strong> · {provider.currency} · {provider.address || 'Address not set'}
+            </p>
           </div>
 
           <div className="card">
@@ -135,8 +146,32 @@ export default function NewProject() {
                 <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Brand Film 2025" />
               </div>
               <div className="form-group full">
-                <label>Project Goal</label>
-                <textarea rows={2} value={form.projectGoal} onChange={e => set('projectGoal', e.target.value)} placeholder="Main objective?" />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>Project Goal</label>
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ padding: '2px 8px', fontSize: 10, height: 'auto' }}
+                    onClick={() => handleAIRewrite('projectGoal', form.projectGoal)}
+                    disabled={loadingAI === 'projectGoal'}
+                  >
+                    {loadingAI === 'projectGoal' ? '✨ Processing...' : '✨ Polish with AI'}
+                  </button>
+                </div>
+                <textarea rows={2} value={form.projectGoal} onChange={e => set('projectGoal', e.target.value)} placeholder="What is the main objective?" />
+              </div>
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>Scope of Work</label>
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ padding: '2px 8px', fontSize: 10, height: 'auto' }}
+                    onClick={handleAIScope}
+                    disabled={loadingAI === 'scope'}
+                  >
+                    {loadingAI === 'scope' ? '✨ Drafting...' : '✨ Generate with AI'}
+                  </button>
+                </div>
+                <textarea rows={4} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="List deliverables or use AI..." />
               </div>
             </div>
           </div>
@@ -145,12 +180,16 @@ export default function NewProject() {
             <div className="card-title">3. Pricing & Terms</div>
             <div className="form-grid">
               <div className="form-group">
-                <label>Total Budget</label>
+                <label>Total Budget ({provider.currency})</label>
                 <input type="number" value={form.totalPrice} onChange={e => set('totalPrice', e.target.value)} placeholder="0" />
               </div>
               <div className="form-group">
                 <label>Advance %</label>
                 <input type="number" value={form.advancePercent} onChange={e => set('advancePercent', e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>Revision Rounds</label>
+                <input value={form.revisions} onChange={e => set('revisions', e.target.value)} placeholder="Optional" />
               </div>
             </div>
           </div>
