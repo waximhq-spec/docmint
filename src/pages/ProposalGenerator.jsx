@@ -80,22 +80,23 @@ export default function ProposalGenerator() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const handleAIScope = async () => {
+    if (!form.scopeOfWork.trim()) {
+      // If empty, generate a draft based on context
+      setLoadingAI('scope');
+      const result = await generateWithAI(
+        `Draft a professional scope of work for a ${form.serviceType} project titled "${form.projectTitle}". Use bullet points.`
+      );
+      set('scopeOfWork', result);
+      setLoadingAI(null);
+      return;
+    }
+
     setLoadingAI('scope');
     const result = await generateWithAI(
-      `You are a professional creative agency assistant.
+      `Polish and expand the following scope of work for a professional creative agency proposal. 
+      Keep the original meaning but make it sound more premium, clear, and structured with bullet points:
 
-Create a clear and structured scope of work for a ${form.serviceType} project titled "${form.projectTitle}".
-
-Budget: ${provider.currency} ${form.budget || 'TBD'}
-Timeline: ${form.timeline || 'TBD'}
-Goal: ${form.projectGoal || 'To deliver a high-quality creative output.'}
-
-Include:
-- Pre-production
-- Production
-- Post-production
-
-Use bullet points. Keep it concise and client-ready. No intro or closing text, just the scope.`
+      "${form.scopeOfWork}"`
     );
     set('scopeOfWork', result);
     setLoadingAI(null);
@@ -175,7 +176,7 @@ ${doc.text}`
               <div className="form-group full">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <label style={{ margin: 0 }}>Scope of Work</label>
-                  <AIButton label="Generate with AI" loading={loadingAI === 'scope'} onClick={handleAIScope} />
+                  <AIButton label="Polish with AI" loading={loadingAI === 'scope'} onClick={handleAIScope} />
                 </div>
                 <textarea rows={7} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="List specific deliverables, or let AI generate a full scope..." />
               </div>
