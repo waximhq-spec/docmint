@@ -19,6 +19,7 @@ const DEFAULT_FORM = {
   companyName: '',
   email: '',
   items: [{ desc: '', qty: 1, rate: '' }],
+  expenses: [],
   invoiceNumber: '',
   invoiceDate: new Date().toISOString().split('T')[0],
   dueDate: '',
@@ -26,9 +27,10 @@ const DEFAULT_FORM = {
   status: 'Unpaid',
   gstEnabled: false,
   gstRate: 18,
+  discount: '',
   advancePaid: '',
   advanceRequested: '',
-  notes: 'Payment due within 7 days.\nNo refunds after delivery.',
+  notes: 'Payment due within 7 days.\nLate payments incur a 5% fee after the due date.\nIncludes 2 rounds of revisions as agreed.',
 };
 
 export default function InvoiceGenerator() {
@@ -53,6 +55,7 @@ export default function InvoiceGenerator() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const setProv = (k, v) => setProvider(p => ({ ...p, [k]: v }));
 
+  // Item Handlers
   const addItem = () => set('items', [...form.items, { desc: '', qty: 1, rate: '' }]);
   const removeItem = (i) => set('items', form.items.filter((_, idx) => idx !== i));
   const updateItem = (i, k, v) => {
@@ -61,10 +64,26 @@ export default function InvoiceGenerator() {
     set('items', newItems);
   };
 
-  const calculateSubtotal = () => form.items.reduce((acc, item) => acc + (parseFloat(item.qty) * parseFloat(item.rate) || 0), 0);
-  const subtotal = calculateSubtotal();
-  const gstAmount = form.gstEnabled ? (subtotal * form.gstRate) / 100 : 0;
-  const total = subtotal + gstAmount;
+  // Expense Handlers
+  const addExpense = () => set('expenses', [...form.expenses, { desc: '', amount: '' }]);
+  const removeExpense = (i) => set('expenses', form.expenses.filter((_, idx) => idx !== i));
+  const updateExpense = (i, k, v) => {
+    const newEx = [...form.expenses];
+    newEx[i][k] = v;
+    set('expenses', newEx);
+  };
+
+  const calculateTotals = () => {
+    const subItems = form.items.reduce((acc, item) => acc + (parseFloat(item.qty) * parseFloat(item.rate) || 0), 0);
+    const subEx = form.expenses.reduce((acc, exp) => acc + (parseFloat(exp.amount) || 0), 0);
+    const subtotal = subItems + subEx;
+    const discount = parseFloat(form.discount) || 0;
+    const afterDiscount = subtotal - discount;
+    const gst = form.gstEnabled ? (afterDiscount * form.gstRate) / 100 : 0;
+    return { subtotal, discount, gst, total: afterDiscount + gst };
+  };
+
+  const totals = calculateTotals();
 
   const validate = () => {
     const e = {};
@@ -79,36 +98,26 @@ export default function InvoiceGenerator() {
     if (!validate()) return;
     const result = generateInvoice(form, provider);
     setDoc(result);
-    // Increment only on successful generation
     getNextInvoiceNumber(); 
   };
 
   return (
     <div className="page-body fade-enter">
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 32, alignItems: 'start' }}>
         
         {/* Left: Controls */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           
-          {/* Provider & Payment Info */}
           <div className="card">
-            <div className="card-title">1. Your Business & Payment Info</div>
+            <div className="card-title">1. Professional Identity</div>
             <div className="form-grid">
               <div className="form-group full">
                 <label>Your Name / Agency Name</label>
-                <input value={provider.name} onChange={e => setProv('name', e.target.value)} placeholder="e.g. Acme Studio" />
-              </div>
-              <div className="form-group">
-                <label>Email</label>
-                <input value={provider.email} onChange={e => setProv('email', e.target.value)} placeholder="your@email.com" />
+                <input value={provider.name} onChange={e => setProv('name', e.target.value)} placeholder="e.g. Acme Production House" />
               </div>
               <div className="form-group">
                 <label>Bank Name</label>
-                <input value={provider.bankName} onChange={e => setProv('bankName', e.target.value)} placeholder="HDFC, SBI, etc." />
-              </div>
-              <div className="form-group">
-                <label>Account Number</label>
-                <input value={provider.accNumber} onChange={e => setProv('accNumber', e.target.value)} placeholder="0000 1111 2222" />
+                <input value={provider.bankName} onChange={e => setProv('bankName', e.target.value)} placeholder="e.g. HDFC Bank" />
               </div>
               <div className="form-group">
                 <label>UPI ID</label>
@@ -117,7 +126,6 @@ export default function InvoiceGenerator() {
             </div>
           </div>
 
-          {/* Client Details */}
           <div className="card">
             <div className="card-title">2. Client Details</div>
             <div className="form-grid">
@@ -126,24 +134,23 @@ export default function InvoiceGenerator() {
                 <input value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="Recipient Name" />
               </div>
               <div className="form-group">
-                <label>Company Name</label>
-                <input value={form.companyName} onChange={e => set('companyName', e.target.value)} placeholder="Optional" />
+                <label>Email</label>
+                <input value={form.email} onChange={e => set('email', e.target.value)} placeholder="client@email.com" />
               </div>
             </div>
           </div>
 
-          {/* Line Items */}
           <div className="card">
             <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
-              3. Services / Line Items
+              3. Services & Deliverables
               <button className="btn btn-secondary" onClick={addItem} style={{ padding: '4px 12px', fontSize: 12 }}>+ Add Item</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {form.items.map((item, i) => (
                 <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 60px 100px 30px', gap: 10, alignItems: 'end' }}>
                   <div className="form-group">
-                    <label style={{ fontSize: 11 }}>Description</label>
-                    <input value={item.desc} onChange={e => updateItem(i, 'desc', e.target.value)} placeholder="Service name" />
+                    <label style={{ fontSize: 11 }}>Service Description</label>
+                    <input value={item.desc} onChange={e => updateItem(i, 'desc', e.target.value)} placeholder="e.g. Video Shoot" />
                   </div>
                   <div className="form-group">
                     <label style={{ fontSize: 11 }}>Qty</label>
@@ -153,17 +160,37 @@ export default function InvoiceGenerator() {
                     <label style={{ fontSize: 11 }}>Rate</label>
                     <input type="number" value={item.rate} onChange={e => updateItem(i, 'rate', e.target.value)} placeholder="₹" />
                   </div>
-                  {form.items.length > 1 && (
-                    <button onClick={() => removeItem(i)} style={{ background: 'none', border: 'none', color: '#c00', cursor: 'pointer', paddingBottom: 10 }}>×</button>
-                  )}
+                  <button onClick={() => removeItem(i)} style={{ background: 'none', border: 'none', color: '#c00', cursor: 'pointer', paddingBottom: 10 }}>×</button>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Settings & Status */}
           <div className="card">
-            <div className="card-title">4. Invoice Settings</div>
+            <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              4. Reimbursable Expenses
+              <button className="btn btn-secondary" onClick={addExpense} style={{ padding: '4px 12px', fontSize: 12 }}>+ Add Expense</button>
+            </div>
+            <p style={{ fontSize: 12, color: '#888', marginBottom: 12 }}>Add costs for travel, rental, talent, etc.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {form.expenses.map((exp, i) => (
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 30px', gap: 10, alignItems: 'end' }}>
+                  <div className="form-group">
+                    <label style={{ fontSize: 11 }}>Expense Detail</label>
+                    <input value={exp.desc} onChange={e => updateExpense(i, 'desc', e.target.value)} placeholder="e.g. Camera Rental" />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: 11 }}>Amount</label>
+                    <input type="number" value={exp.amount} onChange={e => updateExpense(i, 'amount', e.target.value)} placeholder="₹" />
+                  </div>
+                  <button onClick={() => removeExpense(i)} style={{ background: 'none', border: 'none', color: '#c00', cursor: 'pointer', paddingBottom: 10 }}>×</button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="card-title">5. Financials & Status</div>
             <div className="form-grid">
               <div className="form-group">
                 <label>Invoice Type</label>
@@ -171,10 +198,11 @@ export default function InvoiceGenerator() {
                   <option>Full Payment</option>
                   <option>Advance Invoice</option>
                   <option>Final Invoice</option>
+                  <option>Milestone Invoice</option>
                 </select>
               </div>
               <div className="form-group">
-                <label>Payment Status</label>
+                <label>Status</label>
                 <select value={form.status} onChange={e => set('status', e.target.value)}>
                   <option>Unpaid</option>
                   <option>Partially Paid</option>
@@ -182,20 +210,17 @@ export default function InvoiceGenerator() {
                   <option>Due</option>
                 </select>
               </div>
-              {form.type === 'Advance Invoice' && (
+              <div className="form-group">
+                <label>Discount (₹)</label>
+                <input type="number" value={form.discount} onChange={e => set('discount', e.target.value)} placeholder="0" />
+              </div>
+              {form.type !== 'Full Payment' && (
                 <div className="form-group">
-                  <label>Advance Amount Requested</label>
-                  <input type="number" value={form.advanceRequested} onChange={e => set('advanceRequested', e.target.value)} placeholder="₹" />
-                </div>
-              )}
-              {form.type === 'Final Invoice' && (
-                <div className="form-group">
-                  <label>Advance Already Paid</label>
-                  <input type="number" value={form.advancePaid} onChange={e => set('advancePaid', e.target.value)} placeholder="₹" />
+                  <label>{form.type === 'Final Invoice' ? 'Advance Already Paid' : 'Amount Requested'}</label>
+                  <input type="number" value={form.type === 'Final Invoice' ? form.advancePaid : form.advanceRequested} onChange={e => set(form.type === 'Final Invoice' ? 'advancePaid' : 'advanceRequested', e.target.value)} placeholder="₹" />
                 </div>
               )}
             </div>
-
             <div className="toggle-row" style={{ marginTop: 20 }}>
               <div className="toggle-info">
                 <div className="toggle-label">Include GST (18%)</div>
@@ -205,38 +230,43 @@ export default function InvoiceGenerator() {
           </div>
 
           <button className="btn btn-primary" onClick={handleGenerate} style={{ width: '100%', height: 48, fontSize: 16 }}>
-            Generate Professional Invoice
+            Generate Agency Invoice
           </button>
         </div>
 
         {/* Right: Live Preview */}
         <div style={{ position: 'sticky', top: 24 }}>
-          <div className="card-title" style={{ marginBottom: 12 }}>Invoice Preview</div>
+          <div className="card-title" style={{ marginBottom: 12 }}>Invoice Summary</div>
+          <div className="card" style={{ background: '#f9f9f9', marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14 }}>
+              <span>Services Subtotal</span>
+              <span>{formatCurrency(totals.subtotal)}</span>
+            </div>
+            {totals.discount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14, color: '#d93025' }}>
+                <span>Discount</span>
+                <span>-{formatCurrency(totals.discount)}</span>
+              </div>
+            )}
+            {form.gstEnabled && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14 }}>
+                <span>GST (18%)</span>
+                <span>{formatCurrency(totals.gst)}</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 18, borderTop: '1px solid #ddd', paddingTop: 12, marginTop: 12 }}>
+              <span>Total Bill</span>
+              <span>{formatCurrency(totals.total)}</span>
+            </div>
+          </div>
+
           {doc ? (
             <DocOutput type="Invoice" html={doc.html} text={doc.text} />
           ) : (
             <div className="card" style={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', borderStyle: 'dashed' }}>
-              Fill details to see preview
+              Preview will appear here
             </div>
           )}
-          
-          <div className="card" style={{ marginTop: 24, background: '#f9f9f9' }}>
-            <div className="card-title" style={{ fontSize: 13 }}>Summary</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14 }}>
-              <span>Subtotal</span>
-              <span>{formatCurrency(subtotal)}</span>
-            </div>
-            {form.gstEnabled && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14 }}>
-                <span>GST (18%)</span>
-                <span>{formatCurrency(gstAmount)}</span>
-              </div>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 16, borderTop: '1px solid #ddd', paddingTop: 8 }}>
-              <span>Total</span>
-              <span>{formatCurrency(total)}</span>
-            </div>
-          </div>
         </div>
 
       </div>
