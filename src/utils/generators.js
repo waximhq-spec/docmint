@@ -55,6 +55,52 @@ export function generateProposal(data, provider) {
 
   const toneText = config.tone === 'Fast' ? 'We are ready to move quickly' : config.tone === 'Premium' ? 'It is our privilege' : 'We are pleased';
 
+  const fullText = `
+# PROPOSAL: ${data.projectTitle}
+**Prepared for:** ${data.clientName}
+**Date:** ${formatDate()}
+
+---
+
+## 1. Introduction
+Dear ${data.clientName},
+
+${toneText} to present this proposal for your upcoming **${serviceType}** project. Based on our preliminary discussions, we have outlined a strategy tailored to help **${data.companyName || data.clientName}** achieve its vision.
+
+---
+
+## 2. Project Understanding
+The primary objective is **${projectGoal || 'to deliver high-quality creative assets'}**. We will execute a comprehensive strategy focused on ${serviceType.toLowerCase()} excellence.
+
+---
+
+## 3. Tailored Scope of Work
+### Core Scope:
+${config.scope}
+
+${scopeOfWork ? `### Specific Deliverables:\n${scopeOfWork}` : ''}
+
+---
+
+## 4. Timeline & Investment
+- **Estimated Timeline:** ${timeline || config.timeline}
+${revisions ? `- **Revision Rounds:** ${revisions} Included` : ''}
+- **Total Project Investment:** **${formatCurrency(budgetNum, currency)}**
+
+---
+
+${includeExclusions ? `## 5. Exclusions
+- Third-party costs (location permits, props, talent fees).
+- ${revisions ? `Additional revisions beyond the agreed ${revisions} rounds.` : 'Excessive revisions outside of standard workflow.'}` : ''}
+
+---
+
+We look forward to moving forward upon your approval.
+
+**${provider.name}**
+${provider.email}
+  `.trim();
+
   return {
     html: `
       <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;padding:40px;background:#fff;line-height:1.6;">
@@ -118,7 +164,7 @@ export function generateProposal(data, provider) {
         </div>
       </div>
     `,
-    text: `PROPOSAL: ${data.projectTitle}\nProject Type: ${serviceType}`
+    text: fullText
   };
 }
 
@@ -139,6 +185,49 @@ export function generateContract(data, provider) {
   const currency = provider.currency || 'INR';
   const advance = (total * parseFloat(advancePercent)) / 100;
   const balance = total - advance;
+
+  const fullText = `
+# SERVICE AGREEMENT
+**Type:** ${serviceType}
+**Date:** ${formatDate()}
+
+---
+
+## 1. The Parties
+This Agreement is entered into between **${provider.name}** ("Provider") and **${data.clientName}** ("Client").
+
+---
+
+## 2. Scope of Services
+The Provider agrees to perform the following ${serviceType.toLowerCase()} services:
+
+### Core Scope:
+${config.scope}
+
+${scopeOfWork ? `### Project-Specific Details:\n${scopeOfWork}` : ''}
+
+---
+
+## 3. Compensation
+- **Total Fee:** **${formatCurrency(total, currency)}**
+- **Advance Payment:** ${formatCurrency(advance, currency)} (${advancePercent}%)
+- **Final Payment:** ${formatCurrency(balance, currency)} (due upon completion)
+
+---
+
+## 4. Timeline
+The estimated timeframe is **${timeline || config.timeline}** from the date of advance payment.
+
+---
+
+${includeOwnership ? `## 5. Intellectual Property\nRights transfer to the Client after full and final payment.\n\n---` : ''}
+${includeLateFee ? `## 6. Late Payment\nA 5% weekly penalty applies to overdue balances.\n\n---` : ''}
+
+**Signatures:**
+
+Provider: ____________________ (${provider.name})
+Client: ______________________ (${data.clientName})
+  `.trim();
 
   return {
     html: `
@@ -200,7 +289,7 @@ export function generateContract(data, provider) {
         </div>
       </div>
     `,
-    text: `CONTRACT: ${data.projectTitle}\nType: ${serviceType}`
+    text: fullText
   };
 }
 
@@ -264,6 +353,44 @@ export function generateInvoice(data, provider) {
     `;
   }
 
+  const fullText = `
+# INVOICE ${invoiceNumber}
+**Date:** ${formatDate(new Date(invoiceDate))}
+**Status:** ${status}
+
+---
+
+## From:
+**${provider.name}**
+${provider.address || ''}
+${provider.email}
+
+## Bill To:
+**${data.clientName}**
+${data.companyName || ''}
+${data.email || ''}
+
+---
+
+## Services:
+${items.map(item => `- ${item.desc} | ${item.qty} x ${formatCurrency(item.rate, currency)} = **${formatCurrency(item.qty * item.rate, currency)}**`).join('\n')}
+
+---
+
+## Total:
+- **Subtotal:** ${formatCurrency(subtotal, currency)}
+${discountAmount > 0 ? `- **Discount:** -${formatCurrency(discountAmount, currency)}` : ''}
+${gstEnabled ? `- **GST (${gstRate}%):** ${formatCurrency(gstAmount, currency)}` : ''}
+- **Total:** **${formatCurrency(total, currency)}**
+
+### **Balance Due:** **${formatCurrency(amountDue, currency)}**
+
+---
+
+**Notes:**
+${notes || 'Payment due within 7 days.'}
+  `.trim();
+
   return {
     html: `
       <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;padding:40px;position:relative;background:#fff;">
@@ -322,18 +449,6 @@ export function generateInvoice(data, provider) {
                 <td style="padding:16px 8px;font-size:14px;font-weight:700;text-align:right;">${formatCurrency(item.qty * item.rate, currency)}</td>
               </tr>
             `).join('')}
-            
-            ${expenses.length > 0 ? `
-              <tr>
-                <td colspan="4" style="padding:24px 8px 8px 8px;font-size:10px;font-weight:800;text-transform:uppercase;color:#888;">Reimbursable Expenses</td>
-              </tr>
-              ${expenses.map(exp => `
-                <tr style="border-bottom:1px solid #e5e5e5;">
-                  <td colspan="3" style="padding:12px 8px;font-size:13px;">${exp.desc}</td>
-                  <td style="padding:12px 8px;font-size:13px;font-weight:700;text-align:right;">${formatCurrency(exp.amount, currency)}</td>
-                </tr>
-              `).join('')}
-            ` : ''}
           </tbody>
         </table>
 
@@ -363,13 +478,6 @@ export function generateInvoice(data, provider) {
               <span>${formatCurrency(total, currency)}</span>
             </div>
             
-            ${type !== 'Full Payment' ? `
-              <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;color:#888;font-style:italic;">
-                <span>${type === 'Final Invoice' ? 'Advance Paid' : 'Requested'}</span>
-                <span>${formatCurrency(type === 'Final Invoice' ? advancePaid : amountDue, currency)}</span>
-              </div>
-            ` : ''}
-
             <div style="display:flex;justify-content:space-between;padding:16px;margin-top:16px;background:#111;border-radius:8px;font-size:18px;font-weight:900;color:#fff;">
               <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;align-self:center;">Balance Due</span>
               <span>${formatCurrency(amountDue, currency)}</span>
@@ -384,45 +492,12 @@ export function generateInvoice(data, provider) {
               ${provider.bankName ? `<strong>Bank:</strong> ${provider.bankName} · ` : ''}
               ${provider.accNumber ? `<strong>A/C:</strong> ${provider.accNumber} · ` : ''}
               ${provider.ifscCode ? `<strong>IFSC:</strong> ${provider.ifscCode}` : ''}
-              ${provider.upiId ? `<br/><strong>UPI ID:</strong> ${provider.upiId}` : ''}
             </div>
-            <div style="font-size:12px;color:#777;line-height:1.6;white-space:pre-line;">${notes || 'Payment due within 7 days.\nLate payments incur a 5% fee after the due date.'}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="margin-bottom:32px;">
-              <div style="width:160px;height:60px;margin-left:auto;border-bottom:1px solid #111;"></div>
-              <div style="font-size:11px;font-weight:700;text-transform:uppercase;margin-top:8px;">Authorized Signature</div>
-              <div style="font-size:12px;color:#888;">${provider.name}</div>
-            </div>
+            <div style="font-size:12px;color:#777;line-height:1.6;white-space:pre-line;">${notes || 'Payment due within 7 days.'}</div>
           </div>
         </div>
       </div>
     `,
-    text: `INVOICE ${invoiceNumber}`
+    text: fullText
   };
-}
-
-export function generateClientBrief(data) {
-  const briefFields = {
-    'Video Production': [
-      { key: 'goal', label: 'Goal of the Video', placeholder: 'Brand awareness, product launch, tutorial...' },
-      { key: 'references', label: 'References / Inspiration', placeholder: 'YouTube links, video styles, competitor examples...' },
-      { key: 'platform', label: 'Target Platform', placeholder: 'YouTube, Instagram Reels, LinkedIn, Website...' },
-      { key: 'tone', label: 'Tone & Style', placeholder: 'Cinematic, energetic, minimalist, documentary...' },
-    ],
-    'Website Development': [
-      { key: 'pages', label: 'Number of Pages', placeholder: 'Home, About, Services, Contact...' },
-      { key: 'design', label: 'Design Preference', placeholder: 'Minimal, bold, colorful, dark mode...' },
-      { key: 'competitors', label: 'Competitor References', placeholder: 'Websites you like or want to beat...' },
-      { key: 'features', label: 'Features Needed', placeholder: 'Contact form, CMS, e-commerce, animations...' },
-    ],
-    'Solar Installation': [
-      { key: 'location', label: 'Installation Location', placeholder: 'City, state, roof access details...' },
-      { key: 'usage', label: 'Monthly Electricity Usage', placeholder: 'Average monthly bill or kWh usage...' },
-      { key: 'roofType', label: 'Roof Type', placeholder: 'Flat, sloped, concrete, tin, terrace...' },
-      { key: 'budget', label: 'Estimated Budget', placeholder: 'Approximate budget or range...' },
-    ],
-  };
-
-  return briefFields[data.projectType] || briefFields['Video Production'];
 }
