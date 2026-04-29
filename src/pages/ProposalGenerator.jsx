@@ -30,7 +30,7 @@ const DEFAULT_FORM = {
   scopeOfWork: '',
   timeline: '',
   budget: '',
-  revisions: '2',
+  revisions: '', // Empty by default
   includeExclusions: true,
   includeAddons: false,
   tone: 'Premium',
@@ -44,7 +44,6 @@ export default function ProposalGenerator() {
   });
   const [doc, setDoc] = useState(null);
 
-  // LISTEN for Global Settings changes from the Sidebar
   useEffect(() => {
     const syncSettings = () => {
       const saved = localStorage.getItem('docmint_provider');
@@ -106,6 +105,15 @@ export default function ProposalGenerator() {
               <div className="form-group">
                 <label>Timeline Override</label>
                 <input value={form.timeline} onChange={e => set('timeline', e.target.value)} placeholder="e.g. 4 weeks" />
+              </div>
+              <div className="form-group">
+                <label>Revision Rounds (Optional)</label>
+                <input 
+                  type="number" 
+                  value={form.revisions} 
+                  onChange={e => set('revisions', e.target.value)} 
+                  placeholder="Leave blank to hide" 
+                />
               </div>
             </div>
           </div>

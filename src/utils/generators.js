@@ -45,9 +45,8 @@ export function generateProposal(data, provider) {
     serviceType = 'Video Production',
     timeline = '',
     budget = '',
-    revisions = '2',
+    revisions = '',
     includeExclusions = false,
-    tone = 'Premium',
   } = data;
 
   const config = PROJECT_CONFIGS[serviceType] || PROJECT_CONFIGS['Video Production'];
@@ -91,10 +90,11 @@ export function generateProposal(data, provider) {
               <td style="padding:12px 0;">Estimated Timeline</td>
               <td style="padding:12px 0;text-align:right;font-weight:700;white-space:pre-line;">${timeline || config.timeline}</td>
             </tr>
+            ${revisions ? `
             <tr style="border-bottom:1px solid #eee;">
               <td style="padding:12px 0;">Revision Rounds</td>
               <td style="padding:12px 0;text-align:right;font-weight:700;">${revisions} Included</td>
-            </tr>
+            </tr>` : ''}
             <tr>
               <td style="padding:16px 0;font-size:16px;"><strong>Total Project Investment</strong></td>
               <td style="padding:16px 0;text-align:right;font-size:18px;font-weight:900;">${formatCurrency(budgetNum, currency)}</td>
@@ -107,7 +107,7 @@ export function generateProposal(data, provider) {
           <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">5. Exclusions</h2>
           <ul style="font-size:13px;color:#555;padding-left:18px;">
             <li>Third-party costs (location permits, props, talent fees).</li>
-            <li>Additional revisions beyond the agreed ${revisions} rounds.</li>
+            <li>${revisions ? `Additional revisions beyond the agreed ${revisions} rounds.` : 'Excessive revisions outside of standard workflow.'}</li>
           </ul>
         </div>` : ''}
 
@@ -129,7 +129,6 @@ export function generateContract(data, provider) {
     timeline = '',
     totalAmount = '',
     advancePercent = '50',
-    paymentMethod = 'Bank Transfer',
     includeOwnership = true,
     includeLateFee = true,
     includeNDA = false,
