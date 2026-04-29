@@ -185,13 +185,6 @@ export default function InvoiceGenerator() {
               <Toggle checked={form.gstEnabled} onChange={v => set('gstEnabled', v)} />
             </div>
           </div>
-            <div className="toggle-row" style={{ marginTop: 16 }}>
-              <div className="toggle-info">
-                <div className="toggle-label">Include Tax/GST</div>
-              </div>
-              <Toggle checked={form.gstEnabled} onChange={v => set('gstEnabled', v)} />
-            </div>
-          </div>
 
           <button className="btn btn-primary" onClick={handleGenerate} style={{ width: '100%', height: 48, fontSize: 16 }}>
             Generate Professional Invoice

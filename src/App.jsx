@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import Sidebar, { PAGE_TITLES } from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
-import NewProject from './pages/NewProject';
 import InvoiceGenerator from './pages/InvoiceGenerator';
 import ProposalGenerator from './pages/ProposalGenerator';
 import ContractGenerator from './pages/ContractGenerator';
@@ -9,7 +8,6 @@ import ContractGenerator from './pages/ContractGenerator';
 function PageContent({ page, onNavigate }) {
   switch (page) {
     case 'dashboard':     return <Dashboard onNavigate={onNavigate} />;
-    case 'new-project':   return <NewProject />;
     case 'invoice':       return <InvoiceGenerator />;
     case 'proposal':      return <ProposalGenerator />;
     case 'contract':      return <ContractGenerator />;
