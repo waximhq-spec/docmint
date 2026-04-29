@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DocOutput from '../components/DocOutput';
-import { formatDate, agencyInfo } from '../utils/helpers';
+import { generateProposal } from '../utils/generators';
 
 const SERVICE_TYPES = [
   'Video Production',
@@ -12,7 +12,13 @@ const SERVICE_TYPES = [
   'Other',
 ];
 
-const DEFAULT = {
+const DEFAULT_PROVIDER = {
+  name: 'Wasim Fayaz',
+  email: 'wasim@example.com',
+  address: 'Kashmir, India',
+};
+
+const DEFAULT_FORM = {
   clientName: '',
   companyName: '',
   serviceType: 'Video Production',
@@ -22,90 +28,79 @@ const DEFAULT = {
 };
 
 export default function ProposalGenerator() {
-  const [form, setForm] = useState(DEFAULT);
+  const [form, setForm] = useState(DEFAULT_FORM);
+  const [provider, setProvider] = useState(() => {
+    const saved = localStorage.getItem('docmint_provider');
+    return saved ? JSON.parse(saved) : DEFAULT_PROVIDER;
+  });
   const [doc, setDoc] = useState(null);
   const [errors, setErrors] = useState({});
 
+  useEffect(() => {
+    localStorage.setItem('docmint_provider', JSON.stringify(provider));
+  }, [provider]);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const setProv = (k, v) => setProvider(p => ({ ...p, [k]: v }));
 
   const validate = () => {
     const e = {};
     if (!form.clientName.trim()) e.clientName = 'Required';
     if (!form.budget.trim()) e.budget = 'Required';
     if (!form.timeline.trim()) e.timeline = 'Required';
+    if (!provider.name.trim()) e.providerName = 'Required';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleGenerate = () => {
     if (!validate()) return;
-    const agency = agencyInfo();
+    
+    const projectData = {
+      projectTitle: `${form.serviceType} Services`,
+      projectType: form.serviceType,
+      clientName: form.clientName,
+      companyName: form.companyName,
+      totalPrice: form.budget.replace(/[^0-9]/g, ''), // Rough estimation for summary
+      advancePercent: '50',
+      timeline: form.timeline,
+      scopeOfWork: form.notes || 'As discussed.',
+      revisions: '2',
+      includeOwnership: true,
+      includeMaintenance: false,
+    };
 
-    const html = `
-      <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;">
-        <div style="margin-bottom:40px;">
-          <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:8px;">Project Proposal</div>
-          <h1 style="font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">${form.serviceType} Services</h1>
-          <p style="color:#555;font-size:14px;">Prepared for ${form.clientName}${form.companyName ? ' · ' + form.companyName : ''} · ${formatDate()}</p>
-        </div>
-
-        <div style="margin-bottom:28px;">
-          <p style="font-size:15px;line-height:1.8;">Dear <strong>${form.clientName}</strong>,</p>
-          <p style="margin-top:12px;line-height:1.8;color:#333;">We appreciate the opportunity to present this proposal for your ${form.serviceType.toLowerCase()} requirements. At ${agency.name}, we specialize in delivering premium, results-driven ${form.serviceType.toLowerCase()} solutions tailored to your specific goals and brand identity.</p>
-        </div>
-
-        <div style="border-top:1px solid #e5e5e5;padding-top:24px;margin-bottom:24px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">What We Offer</h2>
-          <p style="line-height:1.8;">Our ${form.serviceType.toLowerCase()} service includes end-to-end production from concept to final delivery. We work closely with our clients to ensure every detail aligns with their vision, brand identity, and business objectives. Our team brings years of experience, creative excellence, and technical expertise to every project.</p>
-        </div>
-
-        <div style="border-top:1px solid #e5e5e5;padding-top:24px;margin-bottom:24px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">Project Overview</h2>
-          <table style="width:100%;border-collapse:collapse;">
-            <tr>
-              <td style="padding:10px 0;border-bottom:1px solid #e5e5e5;font-size:13px;color:#555;width:40%;">Service Type</td>
-              <td style="padding:10px 0;border-bottom:1px solid #e5e5e5;font-size:13px;font-weight:500;">${form.serviceType}</td>
-            </tr>
-            <tr>
-              <td style="padding:10px 0;border-bottom:1px solid #e5e5e5;font-size:13px;color:#555;">Estimated Budget</td>
-              <td style="padding:10px 0;border-bottom:1px solid #e5e5e5;font-size:13px;font-weight:500;">${form.budget}</td>
-            </tr>
-            <tr>
-              <td style="padding:10px 0;border-bottom:1px solid #e5e5e5;font-size:13px;color:#555;">Estimated Timeline</td>
-              <td style="padding:10px 0;border-bottom:1px solid #e5e5e5;font-size:13px;font-weight:500;">${form.timeline}</td>
-            </tr>
-          </table>
-        </div>
-
-        ${form.notes ? `
-        <div style="border-top:1px solid #e5e5e5;padding-top:24px;margin-bottom:24px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">Additional Notes</h2>
-          <p style="line-height:1.8;white-space:pre-line;">${form.notes}</p>
-        </div>` : ''}
-
-        <div style="border-top:1px solid #e5e5e5;padding-top:24px;margin-bottom:24px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">Why Choose Us</h2>
-          <ul style="list-style:none;padding:0;">
-            <li style="padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13.5px;">— Premium quality with attention to every detail</li>
-            <li style="padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13.5px;">— Transparent communication throughout the project</li>
-            <li style="padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13.5px;">— On-time delivery with milestone tracking</li>
-            <li style="padding:8px 0;font-size:13.5px;">— Dedicated support and revision rounds included</li>
-          </ul>
-        </div>
-
-        <div style="border-top:1px solid #e5e5e5;padding-top:24px;">
-          <p style="line-height:1.8;color:#333;">We are excited about the potential of working together and confident we can deliver results that exceed your expectations. Please feel free to reach out with any questions.</p>
-          <p style="margin-top:16px;line-height:1.8;">Warm regards,<br/><strong>${agency.name}</strong><br/>${agency.email} · ${agency.phone}</p>
-        </div>
-      </div>
-    `;
-
-    const text = `PROJECT PROPOSAL — ${form.serviceType}\n\nFor: ${form.clientName}\nBudget: ${form.budget}\nTimeline: ${form.timeline}`;
-    setDoc({ html, text });
+    const result = generateProposal(projectData, provider);
+    setDoc(result);
   };
 
   return (
     <div className="page-body fade-enter">
+      {/* Provider Info */}
+      <div className="card">
+        <div className="card-title">Provided By</div>
+        <div className="form-grid">
+          <div className="form-group">
+            <label htmlFor="prop-prov-name">Your Name / Company Name *</label>
+            <input
+              id="prop-prov-name"
+              value={provider.name}
+              onChange={e => setProv('name', e.target.value)}
+              placeholder="e.g. Wasim Fayaz"
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="prop-prov-email">Your Email</label>
+            <input
+              id="prop-prov-email"
+              value={provider.email}
+              onChange={e => setProv('email', e.target.value)}
+              placeholder="your@email.com"
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="card">
         <div className="card-title">Proposal Details</div>
         <div className="form-grid">
@@ -141,7 +136,7 @@ export default function ProposalGenerator() {
               id="prop-budget"
               value={form.budget}
               onChange={e => set('budget', e.target.value)}
-              placeholder="e.g. ₹50,000 – ₹80,000"
+              placeholder="e.g. ₹50,000"
               style={errors.budget ? { borderColor: '#c00' } : {}}
             />
             {errors.budget && <span style={{ color: '#c00', fontSize: 11 }}>{errors.budget}</span>}
@@ -164,7 +159,7 @@ export default function ProposalGenerator() {
               rows={3}
               value={form.notes}
               onChange={e => set('notes', e.target.value)}
-              placeholder="Any specific requirements, context, or customizations..."
+              placeholder="Any specific requirements..."
             />
           </div>
         </div>

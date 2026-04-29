@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Toggle from '../components/Toggle';
 import Tabs from '../components/Tabs';
 import DocOutput from '../components/DocOutput';
@@ -12,7 +12,14 @@ import { getNextInvoiceNumber } from '../utils/helpers';
 
 const PROJECT_TYPES = ['Video Production', 'Website Development', 'Solar Installation'];
 
-const DEFAULT = {
+const DEFAULT_PROVIDER = {
+  name: 'Wasim Fayaz',
+  email: 'wasim@example.com',
+  address: 'Kashmir, India',
+  phone: '',
+};
+
+const DEFAULT_FORM = {
   clientName: '',
   companyName: '',
   email: '',
@@ -28,12 +35,22 @@ const DEFAULT = {
 };
 
 export default function NewProject() {
-  const [form, setForm] = useState(DEFAULT);
+  const [form, setForm] = useState(DEFAULT_FORM);
+  const [provider, setProvider] = useState(() => {
+    const saved = localStorage.getItem('docmint_provider');
+    return saved ? JSON.parse(saved) : DEFAULT_PROVIDER;
+  });
+  
   const [docs, setDocs] = useState(null);
   const [briefAnswers, setBriefAnswers] = useState({});
   const [errors, setErrors] = useState({});
 
+  useEffect(() => {
+    localStorage.setItem('docmint_provider', JSON.stringify(provider));
+  }, [provider]);
+
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
+  const setProv = (key, val) => setProvider(p => ({ ...p, [key]: val }));
 
   const validate = () => {
     const e = {};
@@ -42,6 +59,7 @@ export default function NewProject() {
     if (!form.scopeOfWork.trim()) e.scopeOfWork = 'Required';
     if (!form.timeline.trim()) e.timeline = 'Required';
     if (!form.totalPrice || isNaN(parseFloat(form.totalPrice))) e.totalPrice = 'Enter a valid amount';
+    if (!provider.name.trim()) e.providerName = 'Required';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -50,11 +68,12 @@ export default function NewProject() {
     if (!validate()) return;
     const advInvNum = getNextInvoiceNumber();
     const finInvNum = getNextInvoiceNumber();
+    
     setDocs({
-      proposal: generateProposal(form),
-      contract: generateContract(form),
-      advanceInvoice: generateInvoice(form, 'advance', advInvNum),
-      finalInvoice: generateInvoice(form, 'final', finInvNum),
+      proposal: generateProposal(form, provider),
+      contract: generateContract(form, provider),
+      advanceInvoice: generateInvoice(form, 'advance', advInvNum, provider),
+      finalInvoice: generateInvoice(form, 'final', finInvNum, provider),
       briefFields: generateClientBrief(form),
     });
     setBriefAnswers({});
@@ -84,6 +103,42 @@ export default function NewProject() {
 
   return (
     <div className="page-body fade-enter">
+
+      {/* Provider Info */}
+      <div className="card">
+        <div className="card-title">Provided By (Your Identity)</div>
+        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 16 }}>This name will appear as the Service Provider on all generated documents.</p>
+        <div className="form-grid">
+          <div className="form-group">
+            <label htmlFor="np-prov-name">Your Name / Company Name *</label>
+            <input
+              id="np-prov-name"
+              value={provider.name}
+              onChange={e => setProv('name', e.target.value)}
+              placeholder="e.g. Wasim Fayaz or Cinmach Productions"
+              style={errors.providerName ? { borderColor: '#c00' } : {}}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="np-prov-email">Your Email</label>
+            <input
+              id="np-prov-email"
+              value={provider.email}
+              onChange={e => setProv('email', e.target.value)}
+              placeholder="your@email.com"
+            />
+          </div>
+          <div className="form-group full">
+            <label htmlFor="np-prov-address">Your Address / Location</label>
+            <input
+              id="np-prov-address"
+              value={provider.address}
+              onChange={e => setProv('address', e.target.value)}
+              placeholder="e.g. Kashmir, India"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Client Info */}
       <div className="card">

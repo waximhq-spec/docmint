@@ -1,9 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DocOutput from '../components/DocOutput';
 import Toggle from '../components/Toggle';
-import { getNextInvoiceNumber, formatCurrency, formatDate, agencyInfo } from '../utils/helpers';
+import { getNextInvoiceNumber, formatCurrency, formatDate } from '../utils/helpers';
+import { generateInvoice } from '../utils/generators';
 
-const DEFAULT = {
+const DEFAULT_PROVIDER = {
+  name: 'Wasim Fayaz',
+  email: 'wasim@example.com',
+  address: 'Kashmir, India',
+};
+
+const DEFAULT_FORM = {
   clientName: '',
   companyName: '',
   serviceDesc: '',
@@ -12,105 +19,77 @@ const DEFAULT = {
 };
 
 export default function InvoiceGenerator() {
-  const [form, setForm] = useState(DEFAULT);
+  const [form, setForm] = useState(DEFAULT_FORM);
+  const [provider, setProvider] = useState(() => {
+    const saved = localStorage.getItem('docmint_provider');
+    return saved ? JSON.parse(saved) : DEFAULT_PROVIDER;
+  });
   const [doc, setDoc] = useState(null);
   const [errors, setErrors] = useState({});
 
+  useEffect(() => {
+    localStorage.setItem('docmint_provider', JSON.stringify(provider));
+  }, [provider]);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const setProv = (k, v) => setProvider(p => ({ ...p, [k]: v }));
 
   const validate = () => {
     const e = {};
     if (!form.clientName.trim()) e.clientName = 'Required';
     if (!form.serviceDesc.trim()) e.serviceDesc = 'Required';
     if (!form.amount || isNaN(parseFloat(form.amount))) e.amount = 'Enter a valid amount';
+    if (!provider.name.trim()) e.providerName = 'Required';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleGenerate = () => {
     if (!validate()) return;
-    const agency = agencyInfo();
     const invNum = getNextInvoiceNumber();
-    const base = parseFloat(form.amount) || 0;
-    const gstAmt = form.gst ? base * 0.18 : 0;
-    const total = base + gstAmt;
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 7);
+    
+    // We repurpose the project generator for standalone use
+    const projectData = {
+      projectTitle: form.serviceDesc,
+      projectType: 'Service',
+      clientName: form.clientName,
+      companyName: form.companyName,
+      totalPrice: form.amount,
+      advancePercent: '100', // Standalone is usually 100%
+      email: '',
+    };
 
-    const html = `
-      <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px;padding-bottom:24px;border-bottom:2px solid #111;">
-          <div>
-            <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">${agency.name}</div>
-            <div style="font-size:13px;color:#888;">${agency.address}</div>
-            <div style="font-size:13px;color:#888;">${agency.email} · ${agency.phone}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:4px;">Invoice</div>
-            <div style="font-size:24px;font-weight:800;letter-spacing:-0.5px;">${invNum}</div>
-            <div style="font-size:13px;color:#888;margin-top:4px;">Date: ${formatDate()}</div>
-            <div style="font-size:13px;color:#888;">Due: ${formatDate(dueDate)}</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:32px;">
-          <div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:8px;">Bill To</div>
-          <div style="font-size:15px;font-weight:700;">${form.clientName}</div>
-          ${form.companyName ? `<div style="font-size:14px;color:#555;">${form.companyName}</div>` : ''}
-        </div>
-
-        <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
-          <thead>
-            <tr style="background:#f7f7f7;">
-              <th style="text-align:left;padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:#888;border-bottom:1px solid #e5e5e5;">Description</th>
-              <th style="text-align:right;padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:#888;border-bottom:1px solid #e5e5e5;">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="padding:16px;border-bottom:1px solid #e5e5e5;">
-                <div style="font-weight:600;">${form.serviceDesc}</div>
-              </td>
-              <td style="padding:16px;border-bottom:1px solid #e5e5e5;text-align:right;">${formatCurrency(base)}</td>
-            </tr>
-            ${form.gst ? `
-            <tr>
-              <td style="padding:16px;border-bottom:1px solid #e5e5e5;color:#555;">GST (18%)</td>
-              <td style="padding:16px;border-bottom:1px solid #e5e5e5;text-align:right;color:#555;">${formatCurrency(gstAmt)}</td>
-            </tr>` : ''}
-          </tbody>
-        </table>
-
-        <div style="display:flex;justify-content:flex-end;margin-bottom:40px;">
-          <div style="width:240px;border:1px solid #e5e5e5;border-radius:10px;overflow:hidden;">
-            <div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e5e5e5;">
-              <span style="font-size:13px;color:#555;">Subtotal</span>
-              <span style="font-size:13px;">${formatCurrency(base)}</span>
-            </div>
-            ${form.gst ? `<div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e5e5e5;">
-              <span style="font-size:13px;color:#555;">GST (18%)</span>
-              <span style="font-size:13px;">${formatCurrency(gstAmt)}</span>
-            </div>` : ''}
-            <div style="display:flex;justify-content:space-between;padding:14px 16px;background:#f7f7f7;">
-              <span style="font-size:14px;font-weight:700;">Total Due</span>
-              <span style="font-size:14px;font-weight:700;">${formatCurrency(total)}</span>
-            </div>
-          </div>
-        </div>
-
-        <div style="border-top:1px solid #e5e5e5;padding-top:20px;">
-          <p style="font-size:13px;color:#888;line-height:1.7;">Thank you for your business. Please make payment within 7 days. For queries: ${agency.email}</p>
-        </div>
-      </div>
-    `;
-
-    const text = `INVOICE ${invNum}\n\nBill To: ${form.clientName}\nService: ${form.serviceDesc}\nSubtotal: ${formatCurrency(base)}${form.gst ? '\nGST 18%: ' + formatCurrency(gstAmt) : ''}\nTotal Due: ${formatCurrency(total)}\nDue: ${formatDate(dueDate)}`;
-
-    setDoc({ html, text });
+    const result = generateInvoice(projectData, 'advance', invNum, provider);
+    setDoc(result);
   };
 
   return (
     <div className="page-body fade-enter">
+      {/* Provider Info */}
+      <div className="card">
+        <div className="card-title">Provided By</div>
+        <div className="form-grid">
+          <div className="form-group">
+            <label htmlFor="inv-prov-name">Your Name / Company Name *</label>
+            <input
+              id="inv-prov-name"
+              value={provider.name}
+              onChange={e => setProv('name', e.target.value)}
+              placeholder="e.g. Wasim Fayaz"
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="inv-prov-email">Your Email</label>
+            <input
+              id="inv-prov-email"
+              value={provider.email}
+              onChange={e => setProv('email', e.target.value)}
+              placeholder="your@email.com"
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="card">
         <div className="card-title">Invoice Details</div>
         <div className="form-grid">
@@ -157,16 +136,6 @@ export default function InvoiceGenerator() {
               style={errors.amount ? { borderColor: '#c00' } : {}}
             />
             {errors.amount && <span style={{ color: '#c00', fontSize: 11 }}>{errors.amount}</span>}
-          </div>
-        </div>
-
-        <div style={{ marginTop: 16 }}>
-          <div className="toggle-row">
-            <div className="toggle-info">
-              <div className="toggle-label">Include GST (18%)</div>
-              <div className="toggle-desc">Adds 18% GST to the invoice total</div>
-            </div>
-            <Toggle id="inv-gst" checked={form.gst} onChange={v => set('gst', v)} />
           </div>
         </div>
 

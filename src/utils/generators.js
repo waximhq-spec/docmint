@@ -1,7 +1,6 @@
-import { formatDate, agencyInfo, formatCurrency } from '../utils/helpers';
+import { formatDate, formatCurrency } from '../utils/helpers';
 
-export function generateProposal(data) {
-  const agency = agencyInfo();
+export function generateProposal(data, provider) {
   const advance = (parseFloat(data.totalPrice) * parseFloat(data.advancePercent)) / 100;
   const remaining = parseFloat(data.totalPrice) - advance;
 
@@ -16,7 +15,7 @@ export function generateProposal(data) {
 
         <div style="margin-bottom:28px;">
           <p style="font-size:15px;line-height:1.8;">Dear <strong>${data.clientName}</strong>,</p>
-          <p style="margin-top:12px;line-height:1.8;color:#333;">Thank you for considering <strong>${agency.name}</strong> for your project. We are excited about the opportunity to work with <strong>${data.companyName || data.clientName}</strong> and are confident that we can deliver exceptional results that align with your vision and goals.</p>
+          <p style="margin-top:12px;line-height:1.8;color:#333;">Thank you for considering <strong>${provider.name}</strong> for your project. We are excited about the opportunity to work with <strong>${data.companyName || data.clientName}</strong> and are confident that we can deliver exceptional results that align with your vision and goals.</p>
         </div>
 
         <div style="border-top:1px solid #e5e5e5;padding-top:24px;margin-bottom:24px;">
@@ -52,7 +51,7 @@ export function generateProposal(data) {
         ${data.includeOwnership ? `
         <div style="border-top:1px solid #e5e5e5;padding-top:24px;margin-bottom:24px;">
           <h2 style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">Ownership Rights</h2>
-          <p style="line-height:1.8;color:#333;">Upon receipt of full payment, all intellectual property rights, including copyright, for the deliverables produced under this project will be transferred to ${data.clientName}. ${agency.name} retains the right to showcase the work in its portfolio unless otherwise agreed in writing.</p>
+          <p style="line-height:1.8;color:#333;">Upon receipt of full payment, all intellectual property rights, including copyright, for the deliverables produced under this project will be transferred to ${data.clientName}. ${provider.name} retains the right to showcase the work in its portfolio unless otherwise agreed in writing.</p>
         </div>` : ''}
 
         ${data.includeMaintenance ? `
@@ -63,16 +62,15 @@ export function generateProposal(data) {
 
         <div style="border-top:1px solid #e5e5e5;padding-top:24px;margin-bottom:24px;">
           <p style="line-height:1.8;color:#333;">We look forward to the possibility of collaborating with you on this project. Please do not hesitate to reach out if you have any questions or require further information. We are ready to begin immediately upon your approval.</p>
-          <p style="margin-top:16px;line-height:1.8;">Warm regards,<br/><strong>${agency.name}</strong><br/>${agency.email} · ${agency.phone}</p>
+          <p style="margin-top:16px;line-height:1.8;">Warm regards,<br/><strong>${provider.name}</strong><br/>${provider.email}${provider.phone ? ' · ' + provider.phone : ''}</p>
         </div>
       </div>
     `,
-    text: `PROJECT PROPOSAL — ${data.projectTitle}\nPrepared for ${data.clientName} · ${formatDate()}\n\nDear ${data.clientName},\n\nThank you for considering ${agency.name} for your project...\n\nScope: ${data.scopeOfWork}\nTimeline: ${data.timeline}\nTotal: ${formatCurrency(data.totalPrice)}\nAdvance (${data.advancePercent}%): ${formatCurrency(advance)}\nBalance: ${formatCurrency(remaining)}`
+    text: `PROJECT PROPOSAL — ${data.projectTitle}\nPrepared for ${data.clientName} · ${formatDate()}\n\nDear ${data.clientName},\n\nThank you for considering ${provider.name} for your project...\n\nScope: ${data.scopeOfWork}\nTimeline: ${data.timeline}\nTotal: ${formatCurrency(data.totalPrice)}\nAdvance (${data.advancePercent}%): ${formatCurrency(advance)}\nBalance: ${formatCurrency(remaining)}`
   };
 }
 
-export function generateContract(data) {
-  const agency = agencyInfo();
+export function generateContract(data, provider) {
   const advance = (parseFloat(data.totalPrice) * parseFloat(data.advancePercent)) / 100;
   const remaining = parseFloat(data.totalPrice) - advance;
 
@@ -88,7 +86,7 @@ export function generateContract(data) {
           <h2 style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">1. Parties</h2>
           <p style="line-height:1.8;">This Service Agreement ("Agreement") is entered into as of <strong>${formatDate()}</strong>, between:</p>
           <ul style="list-style:none;margin-top:12px;padding:0;">
-            <li style="padding:10px 0;border-bottom:1px solid #e5e5e5;"><strong>Service Provider:</strong> ${agency.name}, ${agency.address} ("Agency")</li>
+            <li style="padding:10px 0;border-bottom:1px solid #e5e5e5;"><strong>Service Provider:</strong> ${provider.name}, ${provider.address || ''}</li>
             <li style="padding:10px 0;"><strong>Client:</strong> ${data.clientName}${data.companyName ? ', ' + data.companyName : ''} ("Client")</li>
           </ul>
         </div>
@@ -123,28 +121,22 @@ export function generateContract(data) {
         ${data.includeOwnership ? `
         <div style="border-top:1px solid #e5e5e5;padding-top:24px;margin-bottom:24px;">
           <h2 style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">6. Intellectual Property & Ownership</h2>
-          <p style="line-height:1.8;">Upon receipt of full and final payment, all intellectual property rights — including but not limited to copyright, design rights, and related rights — in all deliverables created under this Agreement shall be assigned to the Client. Until full payment is received, all rights remain with ${agency.name}. The Agency retains the right to display the work in its portfolio and marketing materials unless otherwise agreed in writing.</p>
+          <p style="line-height:1.8;">Upon receipt of full and final payment, all intellectual property rights — including but not limited to copyright, design rights, and related rights — in all deliverables created under this Agreement shall be assigned to the Client. Until full payment is received, all rights remain with ${provider.name}. The Service Provider retains the right to display the work in its portfolio and marketing materials unless otherwise agreed in writing.</p>
         </div>` : ''}
 
         <div style="border-top:1px solid #e5e5e5;padding-top:24px;margin-bottom:24px;">
           <h2 style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">${data.includeOwnership ? '7' : '6'}. Cancellation Clause</h2>
-          <p style="line-height:1.8;">Either party may terminate this Agreement with 7 days written notice. In the event of cancellation by the Client after work has commenced, the advance payment is non-refundable. Payment for all work completed up to the date of cancellation will be due. In the event of cancellation by the Agency, a pro-rated refund of the advance will be issued based on work not yet completed.</p>
+          <p style="line-height:1.8;">Either party may terminate this Agreement with 7 days written notice. In the event of cancellation by the Client after work has commenced, the advance payment is non-refundable. Payment for all work completed up to the date of cancellation will be due. In the event of cancellation by the Service Provider, a pro-rated refund of the advance will be issued based on work not yet completed.</p>
         </div>
-
-        ${data.includeMaintenance ? `
-        <div style="border-top:1px solid #e5e5e5;padding-top:24px;margin-bottom:24px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">${data.includeOwnership ? '8' : '7'}. Post-Delivery Maintenance</h2>
-          <p style="line-height:1.8;">The Agency will provide a 30-day post-delivery support period at no additional charge to address minor corrections. This does not include new features, redesign, or scope changes. Ongoing maintenance beyond this period is subject to a separate maintenance agreement.</p>
-        </div>` : ''}
 
         <div style="border-top:2px solid #111;padding-top:32px;margin-top:40px;">
           <h2 style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:24px;">Signatures</h2>
           <div style="display:flex;gap:40px;">
             <div style="flex:1;">
-              <p style="font-size:13px;color:#555;margin-bottom:40px;">For & On Behalf of ${agency.name}</p>
+              <p style="font-size:13px;color:#555;margin-bottom:40px;">For & On Behalf of ${provider.name}</p>
               <div style="border-top:1px solid #111;padding-top:8px;">
                 <p style="font-size:12px;color:#888;">Authorized Signature</p>
-                <p style="font-size:13px;font-weight:600;margin-top:4px;">${agency.name}</p>
+                <p style="font-size:13px;font-weight:600;margin-top:4px;">${provider.name}</p>
                 <p style="font-size:12px;color:#888;">Date: _______________</p>
               </div>
             </div>
@@ -160,12 +152,11 @@ export function generateContract(data) {
         </div>
       </div>
     `,
-    text: `SERVICE AGREEMENT\n\nParties:\nAgency: ${agency.name}\nClient: ${data.clientName}\n\nProject: ${data.projectTitle}\nTotal: ${formatCurrency(data.totalPrice)}\nTimeline: ${data.timeline}`
+    text: `SERVICE AGREEMENT\n\nParties:\nProvider: ${provider.name}\nClient: ${data.clientName}\n\nProject: ${data.projectTitle}\nTotal: ${formatCurrency(data.totalPrice)}\nTimeline: ${data.timeline}`
   };
 }
 
-export function generateInvoice(data, type = 'advance', invoiceNumber) {
-  const agency = agencyInfo();
+export function generateInvoice(data, type = 'advance', invoiceNumber, provider) {
   const total = parseFloat(data.totalPrice) || 0;
   const advancePercent = parseFloat(data.advancePercent) || 50;
   const advance = (total * advancePercent) / 100;
@@ -182,9 +173,9 @@ export function generateInvoice(data, type = 'advance', invoiceNumber) {
       <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px;padding-bottom:24px;border-bottom:2px solid #111;">
           <div>
-            <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">${agency.name}</div>
-            <div style="font-size:13px;color:#888;">${agency.address}</div>
-            <div style="font-size:13px;color:#888;">${agency.email}</div>
+            <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">${provider.name}</div>
+            ${provider.address ? `<div style="font-size:13px;color:#888;">${provider.address}</div>` : ''}
+            <div style="font-size:13px;color:#888;">${provider.email}</div>
           </div>
           <div style="text-align:right;">
             <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:4px;">${type === 'advance' ? 'Advance Invoice' : 'Final Invoice'}</div>
@@ -237,7 +228,7 @@ export function generateInvoice(data, type = 'advance', invoiceNumber) {
         </div>
 
         <div style="border-top:1px solid #e5e5e5;padding-top:24px;">
-          <p style="font-size:13px;color:#888;line-height:1.7;">Thank you for your business. Please make payment within 7 days to avoid any delays. For payment details or queries, contact us at ${agency.email}.</p>
+          <p style="font-size:13px;color:#888;line-height:1.7;">Thank you for your business. For payment details or queries, contact ${provider.name} at ${provider.email}.</p>
         </div>
       </div>
     `,
