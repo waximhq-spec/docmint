@@ -16,14 +16,14 @@ const PROJECT_TYPES = [
 const DEFAULT_FORM = {
   clientName: '',
   companyName: '',
-  serviceType: 'Video Production',
   projectTitle: '',
-  projectGoal: '',
+  projectOverview: '',
   scopeOfWork: '',
+  deliverables: '',
   timeline: '',
-  budget: '',
-  revisions: '',
-  includeExclusions: true,
+  pricing: '',
+  revisionPolicy: '',
+  notes: '',
 };
 
 function AIButton({ label, loading, onClick, disabled }) {
@@ -79,26 +79,13 @@ export default function ProposalGenerator() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const handleAIScope = async () => {
-    if (!form.scopeOfWork.trim()) {
-      // If empty, generate a draft based on context
-      setLoadingAI('scope');
-      const result = await generateWithAI(
-        `Draft a professional scope of work for a ${form.serviceType} project titled "${form.projectTitle}". Use bullet points.`
-      );
-      set('scopeOfWork', result);
-      setLoadingAI(null);
-      return;
-    }
-
-    setLoadingAI('scope');
+  const handleAIPolish = async (field, text) => {
+    if (!text.trim()) return;
+    setLoadingAI(field);
     const result = await generateWithAI(
-      `Polish and expand the following scope of work for a professional creative agency proposal. 
-      Keep the original meaning but make it sound more premium, clear, and structured with bullet points:
-
-      "${form.scopeOfWork}"`
+      `Polish this text for a professional agency proposal. Make it sound premium and clear. Return ONLY the polished text:\n\n"${text}"`
     );
-    set('scopeOfWork', result);
+    set(field, result);
     setLoadingAI(null);
   };
 
@@ -114,19 +101,7 @@ export default function ProposalGenerator() {
     setLoadingAI(null);
   };
 
-  const handleImproveProposal = async () => {
-    if (!doc?.text) return;
-    setLoadingAI('improve');
-    const result = await generateWithAI(
-      `Rewrite this proposal in a more professional, premium, and client-ready tone.
 
-Keep it concise and structured. Avoid generic wording:
-
-${doc.text}`
-    );
-    set('projectGoal', result);
-    setLoadingAI(null);
-  };
 
   return (
     <div className="page-body fade-enter">
@@ -154,43 +129,67 @@ ${doc.text}`
           </div>
 
           <div className="card">
-            <div className="card-title">Project Details</div>
+            <div className="card-title">Document Content</div>
             <div className="form-grid">
-              <div className="form-group">
-                <label>Project Type</label>
-                <select value={form.serviceType} onChange={e => set('serviceType', e.target.value)}>
-                  {PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
+              <div className="form-group full">
                 <label>Project Title</label>
                 <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Brand Film 2025" />
               </div>
+
               <div className="form-group full">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <label style={{ margin: 0 }}>Project Goal</label>
-                  <AIButton label="Polish with AI" loading={loadingAI === 'projectGoal'} onClick={() => handleAIRewrite('projectGoal', form.projectGoal)} />
+                  <label style={{ margin: 0 }}>1. Project Overview</label>
+                  <AIButton label="Polish" loading={loadingAI === 'projectOverview'} onClick={() => handleAIPolish('projectOverview', form.projectOverview)} />
                 </div>
-                <textarea rows={2} value={form.projectGoal} onChange={e => set('projectGoal', e.target.value)} placeholder="Describe your main objective..." />
+                <textarea rows={3} value={form.projectOverview} onChange={e => set('projectOverview', e.target.value)} placeholder="High level summary of the project goals..." />
               </div>
+
               <div className="form-group full">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <label style={{ margin: 0 }}>Scope of Work</label>
-                  <AIButton label="Polish with AI" loading={loadingAI === 'scope'} onClick={handleAIScope} />
+                  <label style={{ margin: 0 }}>2. Scope of Work</label>
+                  <AIButton label="Polish" loading={loadingAI === 'scopeOfWork'} onClick={() => handleAIPolish('scopeOfWork', form.scopeOfWork)} />
                 </div>
-                <textarea rows={7} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="List specific deliverables, or let AI generate a full scope..." />
+                <textarea rows={4} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="What exactly will you be doing?..." />
               </div>
-              <div className="form-group">
-                <label>Budget ({provider.currency})</label>
-                <input type="number" value={form.budget} onChange={e => set('budget', e.target.value)} placeholder="0" />
+
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>3. Deliverables</label>
+                  <AIButton label="Polish" loading={loadingAI === 'deliverables'} onClick={() => handleAIPolish('deliverables', form.deliverables)} />
+                </div>
+                <textarea rows={3} value={form.deliverables} onChange={e => set('deliverables', e.target.value)} placeholder="List of tangible assets to be delivered..." />
               </div>
-              <div className="form-group">
-                <label>Timeline</label>
-                <input value={form.timeline} onChange={e => set('timeline', e.target.value)} placeholder="e.g. 4 weeks" />
+
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>4. Timeline</label>
+                  <AIButton label="Polish" loading={loadingAI === 'timeline'} onClick={() => handleAIPolish('timeline', form.timeline)} />
+                </div>
+                <textarea rows={2} value={form.timeline} onChange={e => set('timeline', e.target.value)} placeholder="Key phases and dates..." />
               </div>
-              <div className="form-group">
-                <label>Revision Rounds (Optional)</label>
-                <input type="number" value={form.revisions} onChange={e => set('revisions', e.target.value)} placeholder="Leave blank to hide" />
+
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>5. Pricing</label>
+                  <AIButton label="Polish" loading={loadingAI === 'pricing'} onClick={() => handleAIPolish('pricing', form.pricing)} />
+                </div>
+                <textarea rows={2} value={form.pricing} onChange={e => set('pricing', e.target.value)} placeholder="Total cost and payment milestones..." />
+              </div>
+
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>6. Revision Policy</label>
+                  <AIButton label="Polish" loading={loadingAI === 'revisionPolicy'} onClick={() => handleAIPolish('revisionPolicy', form.revisionPolicy)} />
+                </div>
+                <textarea rows={2} value={form.revisionPolicy} onChange={e => set('revisionPolicy', e.target.value)} placeholder="How many rounds of revisions are included?..." />
+              </div>
+
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>7. Notes / Exclusions</label>
+                  <AIButton label="Polish" loading={loadingAI === 'notes'} onClick={() => handleAIPolish('notes', form.notes)} />
+                </div>
+                <textarea rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Anything explicitly NOT included..." />
               </div>
             </div>
           </div>
@@ -199,24 +198,7 @@ ${doc.text}`
             <button className="btn btn-primary" onClick={() => setDoc(generateProposal(form, provider))} style={{ flex: 1, height: 48 }}>
               Refresh Preview
             </button>
-            <button
-              onClick={handleImproveProposal}
-              disabled={loadingAI === 'improve' || !doc}
-              style={{
-                height: 48,
-                padding: '0 20px',
-                border: '2px solid #6366f1',
-                borderRadius: 12,
-                background: '#fff',
-                color: '#6366f1',
-                fontWeight: 700,
-                fontSize: 13,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {loadingAI === 'improve' ? '⏳ Improving...' : '✨ Improve Proposal'}
-            </button>
+
           </div>
         </div>
 

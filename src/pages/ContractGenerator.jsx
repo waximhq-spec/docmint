@@ -17,15 +17,11 @@ const DEFAULT_FORM = {
   clientName: '',
   companyName: '',
   projectTitle: '',
-  serviceType: 'Video Production',
   scopeOfWork: '',
   timeline: '',
-  totalAmount: '',
-  advancePercent: '50',
-  paymentMethod: 'Bank Transfer',
-  includeOwnership: true,
-  includeLateFee: true,
-  includeNDA: false,
+  paymentTerms: '',
+  intellectualProperty: '',
+  cancellationPolicy: '',
 };
 
 function AIButton({ label, loading, onClick }) {
@@ -73,41 +69,18 @@ export default function ContractGenerator() {
   }, []);
 
   useEffect(() => {
-    if (form.clientName && form.projectTitle && form.totalAmount) {
+    if (form.clientName && form.projectTitle) {
       setDoc(generateContract(form, provider));
     }
   }, [form, provider]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const handleAIDraft = async () => {
-    setLoadingAI('scope');
-    const result = await generateWithAI(
-      `Create a clean and professional contract scope for a ${form.serviceType} project titled "${form.projectTitle}".
-
-Total Value: ${provider.currency} ${form.totalAmount || 'TBD'}
-Timeline: ${form.timeline || 'TBD'}
-
-Include:
-- Scope of work with clear deliverables
-- Payment terms (${form.advancePercent}% advance, remainder on delivery)
-- Revision limits
-- Ownership rights
-- Cancellation policy
-
-Keep it clear, structured, and legally simple. Use bullet points. No generic filler text.`
-    );
-    set('scopeOfWork', result);
-    setLoadingAI(null);
-  };
-
-  const handleAIRewrite = async (field, text) => {
+  const handleAIPolish = async (field, text) => {
     if (!text.trim()) return;
     setLoadingAI(field);
     const result = await generateWithAI(
-      `Rewrite this in a more professional, legally clear tone for a service agreement. Return only the rewritten text:
-
-"${text}"`
+      `Polish this text for a professional agency contract. Make it legally clear, concise, and professional. Return ONLY the polished text:\n\n"${text}"`
     );
     set(field, result);
     setLoadingAI(null);
@@ -138,46 +111,51 @@ Keep it clear, structured, and legally simple. Use bullet points. No generic fil
           </div>
 
           <div className="card">
-            <div className="card-title">Contract Details</div>
+            <div className="card-title">Document Content</div>
             <div className="form-grid">
-              <div className="form-group">
-                <label>Project Type</label>
-                <select value={form.serviceType} onChange={e => set('serviceType', e.target.value)}>
-                  {PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
+              <div className="form-group full">
                 <label>Contract Title</label>
-                <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Brand Film Agreement" />
+                <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Service Agreement" />
               </div>
+
               <div className="form-group full">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <label style={{ margin: 0 }}>Service Scope & Terms</label>
-                  <AIButton label="Draft with AI" loading={loadingAI === 'scope'} onClick={handleAIDraft} />
+                  <label style={{ margin: 0 }}>1. Scope of Work</label>
+                  <AIButton label="Polish" loading={loadingAI === 'scopeOfWork'} onClick={() => handleAIPolish('scopeOfWork', form.scopeOfWork)} />
                 </div>
-                <textarea
-                  rows={6}
-                  value={form.scopeOfWork}
-                  onChange={e => set('scopeOfWork', e.target.value)}
-                  placeholder="Describe services, or let AI draft the full contract scope..."
-                />
-                {form.scopeOfWork && (
-                  <div style={{ marginTop: 6, display: 'flex', justifyContent: 'flex-end' }}>
-                    <AIButton label="Rewrite Professionally" loading={loadingAI === 'rewrite'} onClick={() => handleAIRewrite('scopeOfWork', form.scopeOfWork)} />
-                  </div>
-                )}
+                <textarea rows={4} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="Describe the services to be rendered..." />
               </div>
-              <div className="form-group">
-                <label>Total Value ({provider.currency})</label>
-                <input type="number" value={form.totalAmount} onChange={e => set('totalAmount', e.target.value)} placeholder="0" />
+
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>2. Timeline</label>
+                  <AIButton label="Polish" loading={loadingAI === 'timeline'} onClick={() => handleAIPolish('timeline', form.timeline)} />
+                </div>
+                <textarea rows={2} value={form.timeline} onChange={e => set('timeline', e.target.value)} placeholder="Timeframes and milestones..." />
               </div>
-              <div className="form-group">
-                <label>Advance %</label>
-                <input type="number" value={form.advancePercent} onChange={e => set('advancePercent', e.target.value)} />
+
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>3. Payment Terms</label>
+                  <AIButton label="Polish" loading={loadingAI === 'paymentTerms'} onClick={() => handleAIPolish('paymentTerms', form.paymentTerms)} />
+                </div>
+                <textarea rows={3} value={form.paymentTerms} onChange={e => set('paymentTerms', e.target.value)} placeholder="Fees, payment schedule, and late fees..." />
               </div>
-              <div className="form-group">
-                <label>Timeline</label>
-                <input value={form.timeline} onChange={e => set('timeline', e.target.value)} placeholder="e.g. 3 weeks" />
+
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>4. Intellectual Property</label>
+                  <AIButton label="Polish" loading={loadingAI === 'intellectualProperty'} onClick={() => handleAIPolish('intellectualProperty', form.intellectualProperty)} />
+                </div>
+                <textarea rows={3} value={form.intellectualProperty} onChange={e => set('intellectualProperty', e.target.value)} placeholder="Who owns what and when..." />
+              </div>
+
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>5. Cancellation Policy</label>
+                  <AIButton label="Polish" loading={loadingAI === 'cancellationPolicy'} onClick={() => handleAIPolish('cancellationPolicy', form.cancellationPolicy)} />
+                </div>
+                <textarea rows={3} value={form.cancellationPolicy} onChange={e => set('cancellationPolicy', e.target.value)} placeholder="What happens if the project is cancelled..." />
               </div>
             </div>
           </div>
