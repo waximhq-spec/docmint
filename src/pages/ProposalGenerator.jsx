@@ -1,187 +1,177 @@
 import { useState, useEffect } from 'react';
 import DocOutput from '../components/DocOutput';
+import Toggle from '../components/Toggle';
 import { generateProposal } from '../utils/generators';
 
 const SERVICE_TYPES = [
   'Video Production',
   'Website Development',
   'Solar Installation',
-  'Branding & Design',
-  'Social Media Management',
-  'Photography',
-  'Other',
 ];
+
+const TONES = ['Formal', 'Premium', 'Friendly'];
 
 const DEFAULT_PROVIDER = {
   name: '',
   email: '',
-  address: '',
 };
 
 const DEFAULT_FORM = {
   clientName: '',
   companyName: '',
   serviceType: 'Video Production',
-  budget: '',
+  projectTitle: '',
+  projectGoal: '',
+  scopeOfWork: '',
   timeline: '',
-  notes: '',
+  budget: '',
+  revisions: '2',
+  includeExclusions: true,
+  includeAddons: false,
+  tone: 'Premium',
 };
 
 export default function ProposalGenerator() {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [provider, setProvider] = useState(() => {
     const saved = localStorage.getItem('docmint_provider');
-    if (saved && (saved.includes('Wasim') || saved.includes('Cinmach'))) {
-      localStorage.removeItem('docmint_provider');
-      return DEFAULT_PROVIDER;
-    }
     return saved ? JSON.parse(saved) : DEFAULT_PROVIDER;
   });
   const [doc, setDoc] = useState(null);
-  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     localStorage.setItem('docmint_provider', JSON.stringify(provider));
   }, [provider]);
 
+  // Live preview effect
+  useEffect(() => {
+    if (form.clientName && form.projectTitle) {
+      setDoc(generateProposal(form, provider));
+    }
+  }, [form, provider]);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const setProv = (k, v) => setProvider(p => ({ ...p, [k]: v }));
 
-  const validate = () => {
-    const e = {};
-    if (!form.clientName.trim()) e.clientName = 'Required';
-    if (!form.budget.trim()) e.budget = 'Required';
-    if (!form.timeline.trim()) e.timeline = 'Required';
-    if (!provider.name.trim()) e.providerName = 'Required';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const handleGenerate = () => {
-    if (!validate()) return;
-    
-    const projectData = {
-      projectTitle: `${form.serviceType} Services`,
-      projectType: form.serviceType,
-      clientName: form.clientName,
-      companyName: form.companyName,
-      totalPrice: form.budget.replace(/[^0-9]/g, ''),
-      advancePercent: '50',
-      timeline: form.timeline,
-      scopeOfWork: form.notes || 'As discussed.',
-      revisions: '2',
-      includeOwnership: true,
-      includeMaintenance: false,
-    };
-
-    const result = generateProposal(projectData, provider);
-    setDoc(result);
-  };
-
   return (
     <div className="page-body fade-enter">
-      <div className="card">
-        <div className="card-title">Provided By</div>
-        <div className="form-grid">
-          <div className="form-group">
-            <label htmlFor="prop-prov-name">Your Name / Company Name *</label>
-            <input
-              id="prop-prov-name"
-              value={provider.name}
-              onChange={e => setProv('name', e.target.value)}
-              placeholder="e.g. Your Name"
-            />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'start' }}>
+        
+        {/* Left: Controls */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          
+          <div className="card">
+            <div className="card-title">1. Your Info</div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Name / Company</label>
+                <input value={provider.name} onChange={e => setProv('name', e.target.value)} placeholder="Your Name" />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input value={provider.email} onChange={e => setProv('email', e.target.value)} placeholder="your@email.com" />
+              </div>
+            </div>
           </div>
-          <div className="form-group">
-            <label htmlFor="prop-prov-email">Your Email</label>
-            <input
-              id="prop-prov-email"
-              value={provider.email}
-              onChange={e => setProv('email', e.target.value)}
-              placeholder="name@email.com"
-            />
-          </div>
-        </div>
-      </div>
 
-      <div className="card">
-        <div className="card-title">Proposal Details</div>
-        <div className="form-grid">
-          <div className="form-group">
-            <label htmlFor="prop-client">Client Name *</label>
-            <input
-              id="prop-client"
-              value={form.clientName}
-              onChange={e => set('clientName', e.target.value)}
-              placeholder="Enter client name"
-              style={errors.clientName ? { borderColor: '#c00' } : {}}
-            />
-            {errors.clientName && <span style={{ color: '#c00', fontSize: 11 }}>{errors.clientName}</span>}
+          <div className="card">
+            <div className="card-title">2. Client Details</div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Client Name</label>
+                <input value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="Recipient Name" />
+              </div>
+              <div className="form-group">
+                <label>Company Name</label>
+                <input value={form.companyName} onChange={e => set('companyName', e.target.value)} placeholder="Optional" />
+              </div>
+            </div>
           </div>
-          <div className="form-group">
-            <label htmlFor="prop-company">Company Name</label>
-            <input
-              id="prop-company"
-              value={form.companyName}
-              onChange={e => set('companyName', e.target.value)}
-              placeholder="Optional"
-            />
+
+          <div className="card">
+            <div className="card-title">3. Project Scope</div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Service Type</label>
+                <select value={form.serviceType} onChange={e => set('serviceType', e.target.value)}>
+                  {SERVICE_TYPES.map(t => <option key={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Project Title</label>
+                <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Brand Refresh 2025" />
+              </div>
+              <div className="form-group full">
+                <label>Project Goal</label>
+                <textarea 
+                  rows={2} 
+                  value={form.projectGoal} 
+                  onChange={e => set('projectGoal', e.target.value)} 
+                  placeholder="What is the main objective?" 
+                />
+              </div>
+              <div className="form-group full">
+                <label>Scope Deliverables</label>
+                <textarea 
+                  rows={4} 
+                  value={form.scopeOfWork} 
+                  onChange={e => set('scopeOfWork', e.target.value)} 
+                  placeholder="List specific items (one per line)..." 
+                />
+              </div>
+              <div className="form-group">
+                <label>Timeline</label>
+                <input value={form.timeline} onChange={e => set('timeline', e.target.value)} placeholder="e.g. 4 weeks" />
+              </div>
+              <div className="form-group">
+                <label>Budget (₹)</label>
+                <input type="number" value={form.budget} onChange={e => set('budget', e.target.value)} placeholder="0" />
+              </div>
+            </div>
           </div>
-          <div className="form-group">
-            <label htmlFor="prop-service">Service Type</label>
-            <select id="prop-service" value={form.serviceType} onChange={e => set('serviceType', e.target.value)}>
-              {SERVICE_TYPES.map(s => <option key={s}>{s}</option>)}
-            </select>
+
+          <div className="card">
+            <div className="card-title">4. Advanced Options</div>
+            <div className="form-grid" style={{ marginBottom: 20 }}>
+              <div className="form-group">
+                <label>Tone</label>
+                <select value={form.tone} onChange={e => set('tone', e.target.value)}>
+                  {TONES.map(t => <option key={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Revision Rounds</label>
+                <input type="number" value={form.revisions} onChange={e => set('revisions', e.target.value)} />
+              </div>
+            </div>
+            
+            <div className="toggle-row">
+              <div className="toggle-info">
+                <div className="toggle-label">Include Exclusions</div>
+                <div className="toggle-desc">List what is NOT included to avoid scope creep</div>
+              </div>
+              <Toggle checked={form.includeExclusions} onChange={v => set('includeExclusions', v)} />
+            </div>
           </div>
-          <div className="form-group">
-            <label htmlFor="prop-budget">Budget *</label>
-            <input
-              id="prop-budget"
-              value={form.budget}
-              onChange={e => set('budget', e.target.value)}
-              placeholder="Enter amount"
-              style={errors.budget ? { borderColor: '#c00' } : {}}
-            />
-            {errors.budget && <span style={{ color: '#c00', fontSize: 11 }}>{errors.budget}</span>}
-          </div>
-          <div className="form-group">
-            <label htmlFor="prop-timeline">Timeline *</label>
-            <input
-              id="prop-timeline"
-              value={form.timeline}
-              onChange={e => set('timeline', e.target.value)}
-              placeholder="e.g. 1 month"
-              style={errors.timeline ? { borderColor: '#c00' } : {}}
-            />
-            {errors.timeline && <span style={{ color: '#c00', fontSize: 11 }}>{errors.timeline}</span>}
-          </div>
-          <div className="form-group full">
-            <label htmlFor="prop-notes">Additional Notes</label>
-            <textarea
-              id="prop-notes"
-              rows={3}
-              value={form.notes}
-              onChange={e => set('notes', e.target.value)}
-              placeholder="Any specific requirements..."
-            />
-          </div>
-        </div>
-        <div className="generate-row">
-          <button className="btn btn-primary" onClick={handleGenerate} id="btn-generate-proposal">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
-              <polyline points="13 2 13 9 20 9"/>
-            </svg>
-            Generate Proposal
+
+          <button className="btn btn-primary" onClick={() => setDoc(generateProposal(form, provider))} style={{ width: '100%', height: 48 }}>
+            Refresh Proposal Preview
           </button>
         </div>
-      </div>
 
-      {doc && (
-        <div className="fade-enter" style={{ marginTop: 24 }}>
-          <DocOutput type="Proposal" html={doc.html} text={doc.text} />
+        {/* Right: Preview */}
+        <div style={{ position: 'sticky', top: 24 }}>
+          <div className="card-title" style={{ marginBottom: 12 }}>Live Proposal Preview</div>
+          {doc ? (
+            <DocOutput type="Proposal" html={doc.html} text={doc.text} />
+          ) : (
+            <div className="card" style={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', borderStyle: 'dashed' }}>
+              Fill client name and title to see preview
+            </div>
+          )}
         </div>
-      )}
+
+      </div>
     </div>
   );
 }

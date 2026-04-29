@@ -1,103 +1,205 @@
 import { formatDate, formatCurrency } from '../utils/helpers';
 
 export function generateProposal(data, provider) {
-  const advance = (parseFloat(data.totalPrice) * parseFloat(data.advancePercent)) / 100;
-  const remaining = parseFloat(data.totalPrice) - advance;
+  const {
+    projectGoal = '',
+    scopeOfWork = '',
+    serviceType = 'Video Production',
+    timeline = '',
+    budget = '',
+    revisions = '2',
+    includeExclusions = false,
+    includeAddons = false,
+    tone = 'Premium',
+  } = data;
+
+  const budgetNum = parseFloat(budget) || 0;
+
+  // Structured Scope based on service type
+  let structuredScopeHtml = '';
+  if (serviceType === 'Video Production') {
+    structuredScopeHtml = `
+      <div style="margin-bottom:16px;"><strong>Phase 1: Pre-production</strong><br/>Concept development, scriptwriting, and planning.</div>
+      <div style="margin-bottom:16px;"><strong>Phase 2: Production</strong><br/>On-site filming, equipment, and directing.</div>
+      <div style="margin-bottom:16px;"><strong>Phase 3: Post-production</strong><br/>Editing, color grading, sound design, and final delivery.</div>
+    `;
+  } else if (serviceType === 'Website Development') {
+    structuredScopeHtml = `
+      <div style="margin-bottom:16px;"><strong>Phase 1: Design</strong><br/>UI/UX wireframes, visual design, and feedback cycles.</div>
+      <div style="margin-bottom:16px;"><strong>Phase 2: Development</strong><br/>Frontend & backend coding, CMS integration.</div>
+      <div style="margin-bottom:16px;"><strong>Phase 3: Deployment</strong><br/>Testing, bug fixes, and live launch.</div>
+    `;
+  } else {
+    structuredScopeHtml = `
+      <div style="margin-bottom:16px;"><strong>Phase 1: Assessment</strong><br/>Site survey and technical requirement gathering.</div>
+      <div style="margin-bottom:16px;"><strong>Phase 2: Installation</strong><br/>Panel mounting, wiring, and inverter setup.</div>
+      <div style="margin-bottom:16px;"><strong>Phase 3: Support</strong><br/>Connection to grid and post-install maintenance overview.</div>
+    `;
+  }
+
+  const toneText = tone === 'Friendly' ? 'We are super excited' : tone === 'Premium' ? 'It is our privilege' : 'We are pleased';
 
   return {
     html: `
-      <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;">
-        <div style="margin-bottom:40px;">
-          <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:8px;">Project Proposal</div>
-          <h1 style="font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">${data.projectTitle}</h1>
+      <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;padding:40px;background:#fff;line-height:1.6;">
+        <div style="margin-bottom:60px;border-bottom:1px solid #eee;padding-bottom:24px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:8px;">Proposal For</div>
+          <h1 style="font-size:28px;font-weight:900;letter-spacing:-0.5px;margin-bottom:4px;">${data.projectTitle}</h1>
           <p style="color:#555;font-size:14px;">Prepared for ${data.clientName} · ${formatDate()}</p>
         </div>
 
-        <div style="margin-bottom:28px;">
-          <p style="font-size:15px;line-height:1.8;">Dear <strong>${data.clientName}</strong>,</p>
-          <p style="margin-top:12px;line-height:1.8;color:#333;">Thank you for considering <strong>${provider.name}</strong> for your project. We are excited about the opportunity to work with <strong>${data.companyName || data.clientName}</strong> and are confident that we can deliver exceptional results that align with your vision and goals.</p>
+        <div style="margin-bottom:40px;">
+          <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">1. Introduction</h2>
+          <p>Dear ${data.clientName},</p>
+          <p style="margin-top:12px;">${toneText} to present this proposal for your upcoming project. Based on our preliminary discussions, we have outlined a strategy tailored to help <strong>${data.companyName || data.clientName}</strong> achieve its vision.</p>
         </div>
 
-        <div style="border-top:1px solid #e5e5e5;padding-top:24px;margin-bottom:24px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">Project Overview</h2>
-          <p style="line-height:1.8;"><strong>Project Type:</strong> ${data.projectType}</p>
-          <p style="line-height:1.8;"><strong>Estimated Timeline:</strong> ${data.timeline}</p>
-          <p style="line-height:1.8;"><strong>Revisions Included:</strong> ${data.revisions} rounds</p>
+        <div style="margin-bottom:40px;">
+          <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">2. Project Understanding</h2>
+          <p>Based on your requirements, we understand that the primary objective is <strong>${projectGoal}</strong>. To achieve this, we will execute a comprehensive <strong>${serviceType}</strong> strategy focused on high-quality deliverables and measurable results.</p>
         </div>
 
-        <div style="border-top:1px solid #e5e5e5;padding-top:24px;margin-bottom:24px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">Scope of Work</h2>
-          <p style="line-height:1.8;white-space:pre-line;">${data.scopeOfWork}</p>
+        <div style="margin-bottom:40px;">
+          <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">3. Structured Scope of Work</h2>
+          <div style="font-size:14px;color:#333;">
+            ${structuredScopeHtml}
+            <div style="margin-top:20px;padding:16px;background:#f9f9f9;border-radius:8px;font-size:13px;white-space:pre-line;"><strong>Specific Deliverables:</strong>\n${scopeOfWork}</div>
+          </div>
         </div>
 
-        <div style="border-top:1px solid #e5e5e5;padding-top:24px;margin-bottom:24px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:16px;">Investment</h2>
-          <table style="width:100%;border-collapse:collapse;">
-            <tr style="background:#f7f7f7;">
-              <td style="padding:12px 16px;font-size:13px;border-bottom:1px solid #e5e5e5;"><strong>Total Project Investment</strong></td>
-              <td style="padding:12px 16px;font-size:13px;border-bottom:1px solid #e5e5e5;text-align:right;">${formatCurrency(data.totalPrice)}</td>
+        <div style="margin-bottom:40px;">
+          <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">4. Timeline & Investment</h2>
+          <table style="width:100%;border-collapse:collapse;margin-top:12px;">
+            <tr style="border-bottom:1px solid #eee;">
+              <td style="padding:12px 0;">Estimated Timeline</td>
+              <td style="padding:12px 0;text-align:right;font-weight:700;">${timeline}</td>
+            </tr>
+            <tr style="border-bottom:1px solid #eee;">
+              <td style="padding:12px 0;">Revision Rounds</td>
+              <td style="padding:12px 0;text-align:right;font-weight:700;">${revisions} Included</td>
             </tr>
             <tr>
-              <td style="padding:12px 16px;font-size:13px;border-bottom:1px solid #e5e5e5;color:#555;">Advance Payment (${data.advancePercent}%)</td>
-              <td style="padding:12px 16px;font-size:13px;border-bottom:1px solid #e5e5e5;text-align:right;color:#555;">${formatCurrency(advance)}</td>
-            </tr>
-            <tr>
-              <td style="padding:12px 16px;font-size:13px;color:#555;">Balance on Delivery (${100 - parseFloat(data.advancePercent)}%)</td>
-              <td style="padding:12px 16px;font-size:13px;text-align:right;color:#555;">${formatCurrency(remaining)}</td>
+              <td style="padding:16px 0;font-size:16px;"><strong>Total Project Investment</strong></td>
+              <td style="padding:16px 0;text-align:right;font-size:18px;font-weight:900;">${formatCurrency(budgetNum)}</td>
             </tr>
           </table>
         </div>
 
-        <div style="border-top:1px solid #e5e5e5;padding-top:24px;margin-bottom:24px;">
-          <p style="line-height:1.8;color:#333;">Warm regards,<br/><strong>${provider.name}</strong><br/>${provider.email}${provider.phone ? ' · ' + provider.phone : ''}</p>
+        ${includeExclusions ? `
+        <div style="margin-bottom:40px;">
+          <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">5. Exclusions</h2>
+          <ul style="font-size:13px;color:#555;padding-left:18px;">
+            <li>Third-party software or license fees.</li>
+            <li>Additional revision rounds beyond the agreed limit.</li>
+            <li>Out-of-scope features or major concept pivots.</li>
+          </ul>
+        </div>` : ''}
+
+        <div style="border-top:1px solid #eee;padding-top:40px;margin-top:60px;text-align:center;">
+          <p style="font-size:15px;color:#333;margin-bottom:24px;">We’d be happy to move forward upon your approval.</p>
+          <div style="font-size:14px;font-weight:700;">${provider.name}</div>
+          <div style="font-size:12px;color:#888;">${provider.email}</div>
         </div>
       </div>
     `,
-    text: `PROJECT PROPOSAL — ${data.projectTitle}`
+    text: `PROPOSAL: ${data.projectTitle}\nClient: ${data.clientName}\nBudget: ${formatCurrency(budgetNum)}`
   };
 }
 
 export function generateContract(data, provider) {
-  const advance = (parseFloat(data.totalPrice) * parseFloat(data.advancePercent)) / 100;
-  const remaining = parseFloat(data.totalPrice) - advance;
+  const {
+    serviceType = '',
+    scopeOfWork = '',
+    timeline = '',
+    totalAmount = '',
+    advancePercent = '50',
+    paymentMethod = 'Bank Transfer',
+    includeOwnership = true,
+    includeLateFee = true,
+    includeNDA = false,
+    includeCancellation = true,
+    includePortfolio = true,
+  } = data;
+
+  const total = parseFloat(totalAmount) || 0;
+  const advance = (total * parseFloat(advancePercent)) / 100;
+  const balance = total - advance;
 
   return {
     html: `
-      <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;">
-        <div style="text-align:center;margin-bottom:36px;padding-bottom:28px;border-bottom:2px solid #111;">
-          <h1 style="font-size:22px;font-weight:800;letter-spacing:-0.3px;margin-bottom:4px;">SERVICE AGREEMENT</h1>
-          <p style="font-size:13px;color:#888;">Dated: ${formatDate()}</p>
+      <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;padding:60px;background:#fff;line-height:1.7;font-size:13px;">
+        <div style="text-align:center;margin-bottom:60px;">
+          <h1 style="font-size:24px;font-weight:900;letter-spacing:-0.5px;text-transform:uppercase;margin-bottom:4px;">Service Agreement</h1>
+          <p style="color:#888;font-size:12px;">Agreement Ref: ${new Date().getFullYear()}/${Math.floor(Math.random()*9000)+1000}</p>
         </div>
 
-        <div style="margin-bottom:28px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:12px;">1. Parties</h2>
-          <p style="line-height:1.8;">This Agreement is entered into between:</p>
-          <ul style="list-style:none;margin-top:12px;padding:0;">
-            <li style="padding:10px 0;border-bottom:1px solid #e5e5e5;"><strong>Provider:</strong> ${provider.name}, ${provider.address || ''}</li>
-            <li style="padding:10px 0;"><strong>Client:</strong> ${data.clientName}${data.companyName ? ', ' + data.companyName : ''}</li>
+        <div style="margin-bottom:32px;">
+          <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">1. The Parties</h2>
+          <p>This Service Agreement ("Agreement") is entered into on <strong>${formatDate()}</strong> between:</p>
+          <p style="margin-top:8px;"><strong>Service Provider:</strong> ${provider.name}, located at ${provider.address || 'Registered Address'} ("Provider")</p>
+          <p><strong>Client:</strong> ${data.clientName}${data.companyName ? ', ' + data.companyName : ''} ("Client")</p>
+        </div>
+
+        <div style="margin-bottom:32px;">
+          <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">2. Scope of Services</h2>
+          <p>The Provider agrees to perform the following services for the Client:</p>
+          <div style="margin-top:12px;padding:16px;background:#f9f9f9;border-radius:4px;white-space:pre-line;"><strong>${data.projectTitle}</strong>\n${scopeOfWork}</div>
+        </div>
+
+        <div style="margin-bottom:32px;">
+          <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">3. Compensation & Payment</h2>
+          <p>The Client agrees to pay the Provider a total fee of <strong>${formatCurrency(total)}</strong> for the services described above.</p>
+          <ul style="margin-top:12px;padding-left:20px;">
+            <li><strong>Advance Payment:</strong> ${formatCurrency(advance)} (${advancePercent}% due on signing)</li>
+            <li><strong>Final Payment:</strong> ${formatCurrency(balance)} (due upon completion)</li>
+            <li><strong>Method:</strong> Payment via ${paymentMethod}</li>
           </ul>
         </div>
 
-        <div style="border-top:2px solid #111;padding-top:32px;margin-top:40px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#888;margin-bottom:24px;">Signatures</h2>
-          <div style="display:flex;gap:40px;">
-            <div style="flex:1;">
-              <p style="font-size:13px;color:#555;margin-bottom:40px;">For ${provider.name}</p>
-              <div style="border-top:1px solid #111;padding-top:8px;">
-                <p style="font-size:13px;font-weight:600;margin-top:4px;">${provider.name}</p>
-              </div>
-            </div>
-            <div style="flex:1;">
-              <p style="font-size:13px;color:#555;margin-bottom:40px;">Client</p>
-              <div style="border-top:1px solid #111;padding-top:8px;">
-                <p style="font-size:13px;font-weight:600;margin-top:4px;">${data.clientName}</p>
-              </div>
-            </div>
+        <div style="margin-bottom:32px;">
+          <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">4. Timeline</h2>
+          <p>The estimated timeframe for completion is <strong>${timeline}</strong>. Delays from the client side (e.g. failure to provide materials or feedback within 48 hours) may affect the final delivery date.</p>
+        </div>
+
+        ${includeOwnership ? `
+        <div style="margin-bottom:32px;">
+          <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">5. Intellectual Property</h2>
+          <p>Upon receipt of full and final payment, all intellectual property rights for the work created under this agreement shall transfer to the Client. The Provider retains ownership until the balance is cleared in full.</p>
+        </div>` : ''}
+
+        ${includeNDA ? `
+        <div style="margin-bottom:32px;">
+          <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">6. Confidentiality (NDA)</h2>
+          <p>Both parties agree to protect and keep confidential any sensitive business information, trade secrets, or proprietary data shared during the course of this project.</p>
+        </div>` : ''}
+
+        ${includeLateFee ? `
+        <div style="margin-bottom:32px;">
+          <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">7. Late Payment Terms</h2>
+          <p>Payments not received within 7 days of the invoice date will incur a <strong>5% late fee</strong> for every 7-day period the balance remains outstanding.</p>
+        </div>` : ''}
+
+        ${includeCancellation ? `
+        <div style="margin-bottom:32px;">
+          <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">8. Cancellation Policy</h2>
+          <p>If the Client cancels the project after signing, the advance payment is non-refundable. The Client shall also be liable for all work completed up to the date of cancellation.</p>
+        </div>` : ''}
+
+        <div style="margin-top:80px;display:flex;gap:60px;">
+          <div style="flex:1;">
+            <div style="height:60px;border-bottom:1px solid #111;margin-bottom:8px;"></div>
+            <div style="font-weight:700;">${provider.name}</div>
+            <div style="font-size:11px;color:#888;">Authorized Provider Signature</div>
+          </div>
+          <div style="flex:1;">
+            <div style="height:60px;border-bottom:1px solid #111;margin-bottom:8px;"></div>
+            <div style="font-weight:700;">${data.clientName}</div>
+            <div style="font-size:11px;color:#888;">Authorized Client Signature</div>
           </div>
         </div>
       </div>
     `,
-    text: `SERVICE AGREEMENT — ${data.projectTitle}`
+    text: `CONTRACT: ${data.projectTitle}\nClient: ${data.clientName}\nTotal: ${formatCurrency(total)}`
   };
 }
 
@@ -115,7 +217,6 @@ export function generateInvoice(data, provider) {
     discount = 0,
     advancePaid = 0,
     notes = '',
-    milestoneName = '',
   } = data;
 
   const subtotalItems = items.reduce((acc, item) => acc + (parseFloat(item.qty) * parseFloat(item.rate) || 0), 0);
@@ -143,14 +244,12 @@ export function generateInvoice(data, provider) {
   };
   const sColor = statusColors[status] || statusColors['Unpaid'];
 
-  // Watermark for Unpaid
   const watermarkHtml = status === 'Unpaid' || status === 'Due' ? `
     <div style="position:absolute;top:40%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:80px;font-weight:900;color:rgba(217,48,37,0.08);pointer-events:none;z-index:0;text-transform:uppercase;white-space:nowrap;letter-spacing:10px;">
       Pending Payment
     </div>
   ` : '';
 
-  // UPI QR Code
   let qrCodeHtml = '';
   if (provider.upiId && status !== 'Paid') {
     const upiLink = `upi://pay?pa=${provider.upiId}&pn=${encodeURIComponent(provider.name)}&am=${amountDue}&cu=INR&tn=${encodeURIComponent('Invoice ' + invoiceNumber)}`;
@@ -283,7 +382,7 @@ export function generateInvoice(data, provider) {
               ${provider.bankName ? `<strong>Bank:</strong> ${provider.bankName} · ` : ''}
               ${provider.accNumber ? `<strong>A/C:</strong> ${provider.accNumber} · ` : ''}
               ${provider.ifscCode ? `<strong>IFSC:</strong> ${provider.ifscCode}` : ''}
-              ${provider.upiId ? `<br/><strong>UPI:</strong> ${provider.upiId}` : ''}
+              ${provider.upiId ? `<br/><strong>UPI ID:</strong> ${provider.upiId}` : ''}
             </div>
             <div style="font-size:12px;color:#777;line-height:1.6;white-space:pre-line;">${notes || 'Payment due within 7 days.\nLate payments incur a 5% fee after the due date.'}</div>
           </div>
@@ -297,7 +396,7 @@ export function generateInvoice(data, provider) {
         </div>
       </div>
     `,
-    text: `INVOICE ${invoiceNumber} — ${status}`
+    text: `INVOICE ${invoiceNumber}`
   };
 }
 

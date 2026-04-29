@@ -1,6 +1,14 @@
 import { useState, useEffect } from 'react';
 import DocOutput from '../components/DocOutput';
+import Toggle from '../components/Toggle';
 import { generateContract } from '../utils/generators';
+
+const SERVICE_TYPES = [
+  'Video Production',
+  'Website Development',
+  'Solar Installation',
+  'Consulting',
+];
 
 const DEFAULT_PROVIDER = {
   name: '',
@@ -12,157 +20,159 @@ const DEFAULT_FORM = {
   clientName: '',
   companyName: '',
   projectTitle: '',
-  totalPrice: '',
+  serviceType: 'Video Production',
+  scopeOfWork: '',
   timeline: '',
+  totalAmount: '',
+  advancePercent: '50',
+  paymentMethod: 'Bank Transfer',
+  includeOwnership: true,
+  includeLateFee: true,
+  includeNDA: false,
+  includeCancellation: true,
+  includePortfolio: true,
 };
 
 export default function ContractGenerator() {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [provider, setProvider] = useState(() => {
     const saved = localStorage.getItem('docmint_provider');
-    if (saved && (saved.includes('Wasim') || saved.includes('Cinmach'))) {
-      localStorage.removeItem('docmint_provider');
-      return DEFAULT_PROVIDER;
-    }
     return saved ? JSON.parse(saved) : DEFAULT_PROVIDER;
   });
   const [doc, setDoc] = useState(null);
-  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     localStorage.setItem('docmint_provider', JSON.stringify(provider));
   }, [provider]);
 
+  // Live preview effect
+  useEffect(() => {
+    if (form.clientName && form.projectTitle && form.totalAmount) {
+      setDoc(generateContract(form, provider));
+    }
+  }, [form, provider]);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const setProv = (k, v) => setProvider(p => ({ ...p, [k]: v }));
 
-  const validate = () => {
-    const e = {};
-    if (!form.clientName.trim()) e.clientName = 'Required';
-    if (!form.projectTitle.trim()) e.projectTitle = 'Required';
-    if (!form.totalPrice.trim()) e.totalPrice = 'Required';
-    if (!provider.name.trim()) e.providerName = 'Required';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const handleGenerate = () => {
-    if (!validate()) return;
-    
-    const projectData = {
-      ...form,
-      projectType: 'Service',
-      advancePercent: '50',
-      scopeOfWork: 'As per discussion.',
-      revisions: '2',
-      includeOwnership: true,
-      includeMaintenance: false,
-    };
-
-    const result = generateContract(projectData, provider);
-    setDoc(result);
-  };
-
   return (
     <div className="page-body fade-enter">
-      <div className="card">
-        <div className="card-title">Provided By</div>
-        <div className="form-grid">
-          <div className="form-group">
-            <label htmlFor="cont-prov-name">Your Name / Company Name *</label>
-            <input
-              id="cont-prov-name"
-              value={provider.name}
-              onChange={e => setProv('name', e.target.value)}
-              placeholder="e.g. Your Name"
-            />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'start' }}>
+        
+        {/* Left: Controls */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          
+          <div className="card">
+            <div className="card-title">1. Legal Identity</div>
+            <div className="form-grid">
+              <div className="form-group full">
+                <label>Your Name / Registered Company</label>
+                <input value={provider.name} onChange={e => setProv('name', e.target.value)} placeholder="Full Legal Name" />
+              </div>
+              <div className="form-group full">
+                <label>Registered Address</label>
+                <input value={provider.address} onChange={e => setProv('address', e.target.value)} placeholder="Business Address" />
+              </div>
+            </div>
           </div>
-          <div className="form-group">
-            <label htmlFor="cont-prov-email">Your Email</label>
-            <input
-              id="cont-prov-email"
-              value={provider.email}
-              onChange={e => setProv('email', e.target.value)}
-              placeholder="name@email.com"
-            />
-          </div>
-        </div>
-      </div>
 
-      <div className="card">
-        <div className="card-title">Contract Details</div>
-        <div className="form-grid">
-          <div className="form-group">
-            <label htmlFor="cont-client">Client Name *</label>
-            <input
-              id="cont-client"
-              value={form.clientName}
-              onChange={e => set('clientName', e.target.value)}
-              placeholder="Enter client name"
-              style={errors.clientName ? { borderColor: '#c00' } : {}}
-            />
-            {errors.clientName && <span style={{ color: '#c00', fontSize: 11 }}>{errors.clientName}</span>}
+          <div className="card">
+            <div className="card-title">2. Client Details</div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Client Legal Name</label>
+                <input value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="Individual or Rep" />
+              </div>
+              <div className="form-group">
+                <label>Client Company</label>
+                <input value={form.companyName} onChange={e => set('companyName', e.target.value)} placeholder="Entity Name" />
+              </div>
+            </div>
           </div>
-          <div className="form-group">
-            <label htmlFor="cont-company">Company Name</label>
-            <input
-              id="cont-company"
-              value={form.companyName}
-              onChange={e => set('companyName', e.target.value)}
-              placeholder="Optional"
-            />
+
+          <div className="card">
+            <div className="card-title">3. Contract Details</div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Project Title</label>
+                <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Master Services Agreement" />
+              </div>
+              <div className="form-group">
+                <label>Total Value (₹)</label>
+                <input type="number" value={form.totalAmount} onChange={e => set('totalAmount', e.target.value)} placeholder="0" />
+              </div>
+              <div className="form-group full">
+                <label>Specific Scope Summary</label>
+                <textarea 
+                  rows={3} 
+                  value={form.scopeOfWork} 
+                  onChange={e => set('scopeOfWork', e.target.value)} 
+                  placeholder="Summarize key deliverables..." 
+                />
+              </div>
+              <div className="form-group">
+                <label>Timeline</label>
+                <input value={form.timeline} onChange={e => set('timeline', e.target.value)} placeholder="e.g. 60 Days" />
+              </div>
+              <div className="form-group">
+                <label>Advance %</label>
+                <input type="number" value={form.advancePercent} onChange={e => set('advancePercent', e.target.value)} />
+              </div>
+            </div>
           </div>
-          <div className="form-group full">
-            <label htmlFor="cont-title">Project Title *</label>
-            <input
-              id="cont-title"
-              value={form.projectTitle}
-              onChange={e => set('projectTitle', e.target.value)}
-              placeholder="e.g. Project Title"
-              style={errors.projectTitle ? { borderColor: '#c00' } : {}}
-            />
-            {errors.projectTitle && <span style={{ color: '#c00', fontSize: 11 }}>{errors.projectTitle}</span>}
+
+          <div className="card">
+            <div className="card-title">4. Legal Clauses</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="toggle-row">
+                <div className="toggle-info">
+                  <div className="toggle-label">Ownership Transfer</div>
+                  <div className="toggle-desc">Rights transfer after full payment</div>
+                </div>
+                <Toggle checked={form.includeOwnership} onChange={v => set('includeOwnership', v)} />
+              </div>
+              <div className="toggle-row">
+                <div className="toggle-info">
+                  <div className="toggle-label">Late Payment Penalty</div>
+                  <div className="toggle-desc">Include 5% weekly late fee clause</div>
+                </div>
+                <Toggle checked={form.includeLateFee} onChange={v => set('includeLateFee', v)} />
+              </div>
+              <div className="toggle-row">
+                <div className="toggle-info">
+                  <div className="toggle-label">NDA Clause</div>
+                  <div className="toggle-desc">Mutual confidentiality agreement</div>
+                </div>
+                <Toggle checked={form.includeNDA} onChange={v => set('includeNDA', v)} />
+              </div>
+              <div className="toggle-row">
+                <div className="toggle-info">
+                  <div className="toggle-label">Portfolio Rights</div>
+                  <div className="toggle-desc">Allow use of work for marketing</div>
+                </div>
+                <Toggle checked={form.includePortfolio} onChange={v => set('includePortfolio', v)} />
+              </div>
+            </div>
           </div>
-          <div className="form-group">
-            <label htmlFor="cont-price">Total Price (₹) *</label>
-            <input
-              id="cont-price"
-              value={form.totalPrice}
-              onChange={e => set('totalPrice', e.target.value)}
-              placeholder="Enter amount"
-              style={errors.totalPrice ? { borderColor: '#c00' } : {}}
-            />
-            {errors.totalPrice && <span style={{ color: '#c00', fontSize: 11 }}>{errors.totalPrice}</span>}
-          </div>
-          <div className="form-group">
-            <label htmlFor="cont-timeline">Timeline *</label>
-            <input
-              id="cont-timeline"
-              value={form.timeline}
-              onChange={e => set('timeline', e.target.value)}
-              placeholder="e.g. 1 month"
-            />
-          </div>
-        </div>
-        <div className="generate-row">
-          <button className="btn btn-primary" onClick={handleGenerate} id="btn-generate-contract">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-              <polyline points="10 9 9 9 8 9"/>
-            </svg>
-            Generate Contract
+
+          <button className="btn btn-primary" onClick={() => setDoc(generateContract(form, provider))} style={{ width: '100%', height: 48 }}>
+            Refresh Contract Preview
           </button>
         </div>
-      </div>
 
-      {doc && (
-        <div className="fade-enter" style={{ marginTop: 24 }}>
-          <DocOutput type="Contract" html={doc.html} text={doc.text} />
+        {/* Right: Preview */}
+        <div style={{ position: 'sticky', top: 24 }}>
+          <div className="card-title" style={{ marginBottom: 12 }}>Live Legal Preview</div>
+          {doc ? (
+            <DocOutput type="Contract" html={doc.html} text={doc.text} />
+          ) : (
+            <div className="card" style={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', borderStyle: 'dashed' }}>
+              Fill client, title, and amount to see preview
+            </div>
+          )}
         </div>
-      )}
+
+      </div>
     </div>
   );
 }
