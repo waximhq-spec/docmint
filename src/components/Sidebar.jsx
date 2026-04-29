@@ -1,3 +1,6 @@
+import { useState, useEffect } from 'react';
+import LocationInput from './LocationInput';
+
 const NAV = [
   {
     label: 'Main',
@@ -66,44 +69,89 @@ const NAV = [
 ];
 
 const PAGE_TITLES = {
-  dashboard: { title: 'Dashboard', desc: 'Overview of your agency document activity' },
-  'new-project': { title: 'New Project', desc: 'Generate a complete document set for a new project' },
-  invoice: { title: 'Invoice Generator', desc: 'Create a standalone professional invoice' },
-  proposal: { title: 'Proposal Generator', desc: 'Draft a ready-to-send project proposal' },
+  dashboard: { title: 'Dashboard', desc: 'Overview of your agency activity' },
+  'new-project': { title: 'New Project', desc: 'Generate a complete document set' },
+  invoice: { title: 'Invoice Generator', desc: 'Create a professional invoice' },
+  proposal: { title: 'Proposal Generator', desc: 'Draft a ready-to-send proposal' },
   contract: { title: 'Contract Generator', desc: 'Generate a clean service agreement' },
 };
 
 export default function Sidebar({ activePage, onNavigate }) {
+  const [provider, setProvider] = useState(() => {
+    const saved = localStorage.getItem('docmint_provider');
+    return saved ? JSON.parse(saved) : { name: '', email: '', address: '', currency: 'INR' };
+  });
+
+  useEffect(() => {
+    localStorage.setItem('docmint_provider', JSON.stringify(provider));
+    // Dispatch a storage event so other pages know to update
+    window.dispatchEvent(new Event('storage'));
+  }, [provider]);
+
+  const update = (key, val) => setProvider(p => ({ ...p, [key]: val }));
+
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
         <h1>docmint</h1>
-        <span>Document Generator</span>
+        <span>Agency Document Engine</span>
       </div>
 
-      {NAV.map(section => (
-        <div key={section.label}>
-          <div className="sidebar-section-label">{section.label}</div>
-          <nav className="sidebar-nav">
-            {section.items.map(item => (
-              <button
-                key={item.id}
-                className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
-                onClick={() => onNavigate(item.id)}
-                id={`nav-${item.id}`}
-              >
-                <span className="icon">{item.icon}</span>
-                {item.label}
-              </button>
-            ))}
-          </nav>
-        </div>
-      ))}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {NAV.map(section => (
+          <div key={section.label} style={{ marginBottom: 20 }}>
+            <div className="sidebar-section-label">{section.label}</div>
+            <nav className="sidebar-nav">
+              {section.items.map(item => (
+                <button
+                  key={item.id}
+                  className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
+                  onClick={() => onNavigate(item.id)}
+                  id={`nav-${item.id}`}
+                >
+                  <span className="icon">{item.icon}</span>
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        ))}
+      </div>
 
-      <div style={{ marginTop: 'auto', padding: '24px 20px 0', borderTop: '1px solid var(--border)', marginInline: 10 }}>
-        <div style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.6 }}>
-          <strong style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: 2 }}>Creative Agency</strong>
-          All documents generated locally. No data sent to any server.
+      <div className="sidebar-settings" style={{ padding: '20px 0', borderTop: '1px solid var(--border)', marginTop: 20 }}>
+        <div className="sidebar-section-label" style={{ marginBottom: 12 }}>Global Settings</div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '0 10px' }}>
+          <div className="form-group">
+            <label style={{ fontSize: 10, textTransform: 'uppercase', color: '#888', fontWeight: 800 }}>Agency Name</label>
+            <input 
+              style={{ padding: '6px 10px', fontSize: 12, background: '#f9f9f9' }}
+              value={provider.name} 
+              onChange={e => update('name', e.target.value)} 
+              placeholder="Agency Name" 
+            />
+          </div>
+
+          <div className="form-group">
+            <label style={{ fontSize: 10, textTransform: 'uppercase', color: '#888', fontWeight: 800 }}>Global Currency</label>
+            <select 
+              style={{ padding: '6px 10px', fontSize: 12, background: '#f9f9f9' }}
+              value={provider.currency} 
+              onChange={e => update('currency', e.target.value)}
+            >
+              <option value="INR">INR (₹) - India</option>
+              <option value="BHD">BHD (.د.ب) - Bahrain</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label style={{ fontSize: 10, textTransform: 'uppercase', color: '#888', fontWeight: 800 }}>Agency Address</label>
+            <LocationInput 
+              value={provider.address} 
+              onChange={val => update('address', val)} 
+              placeholder="Search global address..." 
+            />
+          </div>
         </div>
       </div>
     </aside>
