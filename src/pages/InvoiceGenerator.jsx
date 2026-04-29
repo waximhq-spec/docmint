@@ -36,6 +36,7 @@ const DEFAULT_FORM = {
 
 export default function InvoiceGenerator() {
   const [form, setForm] = useState(DEFAULT_FORM);
+  const [mobileTab, setMobileTab] = useState('edit');
   const [provider, setProvider] = useState(() => {
     const saved = localStorage.getItem('docmint_provider');
     return saved ? JSON.parse(saved) : DEFAULT_PROVIDER;
@@ -100,10 +101,17 @@ export default function InvoiceGenerator() {
   };
 
   return (
-    <div className="page-body fade-enter">
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 32, alignItems: 'start' }}>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="fade-enter">
+      {/* Mobile Edit / Preview Tabs */}
+      <div className="mobile-view-tabs">
+        <button className={`mobile-view-tab ${mobileTab === 'edit' ? 'active' : ''}`} onClick={() => setMobileTab('edit')}>✏️ Edit</button>
+        <button className={`mobile-view-tab ${mobileTab === 'preview' ? 'active' : ''}`} onClick={() => setMobileTab('preview')}>👁 Preview</button>
+      </div>
+
+      <div className="page-body">
+        <div className="two-col-layout">
+          {/* LEFT: Form inputs */}
+          <div style={{ display: mobileTab === 'edit' ? 'flex' : 'none', flexDirection: 'column', gap: 16 }} className="form-col">
           
           <div className="card">
             <div className="card-title">1. Global Identity & Currency</div>
@@ -213,11 +221,12 @@ export default function InvoiceGenerator() {
           </div>
 
           <button className="btn btn-primary" onClick={handleGenerate} style={{ width: '100%', height: 48, fontSize: 16 }}>
-            Generate Professional Invoice
+            Generate Invoice
           </button>
-        </div>
+          </div>
 
-        <div style={{ position: 'sticky', top: 24 }}>
+          {/* RIGHT: Preview panel */}
+          <div className="preview-panel" style={{ display: mobileTab === 'preview' ? 'block' : 'none' }}>
           <div className="card-title" style={{ marginBottom: 12 }}>Live Summary ({provider.currency})</div>
           <div className="card" style={{ background: '#f9f9f9', marginBottom: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14 }}>
@@ -254,9 +263,9 @@ export default function InvoiceGenerator() {
               Preview will appear here
             </div>
           )}
-        </div>
-
-      </div>
+          </div>
+        </div>{/* end two-col-layout */}
+      </div>{/* end page-body */}
     </div>
   );
 }
