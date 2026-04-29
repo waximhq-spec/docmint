@@ -77,7 +77,7 @@ export default function Sidebar({ activePage, onNavigate }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <h1>Agency Docs</h1>
+        <h1>docmint</h1>
         <span>Document Generator</span>
       </div>
 

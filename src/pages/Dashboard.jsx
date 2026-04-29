@@ -49,7 +49,7 @@ export default function Dashboard({ onNavigate }) {
       <div className="card">
         <div className="card-title">About This Tool</div>
         <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-          Agency Docs is your all-in-one document generator built for professional agencies. 
+          docmint is your all-in-one document generator built for professional agencies. 
           Generate proposals, contracts, invoices, and client briefs in seconds — 
           all formatted, ready to send, and downloadable as PDF.
         </p>
