@@ -275,7 +275,7 @@ export function generateInvoice(data, provider) {
     invoiceNumber = 'INV-001',
     invoiceDate = new Date(),
     dueDate,
-    type = 'Full Payment Invoice',
+    type = 'Advance Invoice',
     status = 'Unpaid',
     gstEnabled = false,
     gstRate = 18,
@@ -297,12 +297,15 @@ export function generateInvoice(data, provider) {
 
   let amountDue = grandTotal;
   let typeLabel = 'Total Due';
+  let descriptionLabel = 'Project Description';
   if (type === 'Advance Invoice') {
     amountDue = advance;
     typeLabel = 'Advance Due';
-  } else if (type === 'Final Invoice (Remaining Balance)') {
+    descriptionLabel = 'Deliverables (To Be Provided)';
+  } else if (type === 'Final Invoice') {
     amountDue = remaining;
     typeLabel = 'Final Balance Due';
+    descriptionLabel = 'Services Rendered';
   }
 
   const statusColors = {
@@ -352,7 +355,8 @@ ${data.email || ''}
 ---
 
 ## Details:
-**Project Name:** ${projectName || 'Services Rendered'}
+**${descriptionLabel}:**
+${projectName || 'Services Rendered'}
 **Total Project Amount:** ${formatCurrency(total, currency)}
 ${gstEnabled ? `**GST (${gstRate}%):** ${formatCurrency(gstAmount, currency)}` : ''}
 **Grand Total:** ${formatCurrency(grandTotal, currency)}
@@ -360,14 +364,14 @@ ${gstEnabled ? `**GST (${gstRate}%):** ${formatCurrency(gstAmount, currency)}` :
 ---
 
 ## Financials:
-${type !== 'Full Payment Invoice' ? `- **Advance Amount:** ${formatCurrency(advance, currency)}\n- **Remaining Balance:** ${formatCurrency(remaining, currency)}` : ''}
+${type !== 'Full Invoice' ? `- **${type === 'Advance Invoice' ? 'Advance Required' : 'Advance Paid'}:** ${formatCurrency(advance, currency)}\n- **Remaining Balance:** ${formatCurrency(remaining, currency)}` : ''}
 
 ### **${typeLabel}:** **${formatCurrency(amountDue, currency)}**
 
 ---
 
 **Notes:**
-${notes || 'Payment due within 7 days.'}
+${type === 'Advance Invoice' ? 'This is an advance invoice.\n' : ''}${type === 'Final Invoice' ? 'This is a final invoice.\n' : ''}${notes || 'Payment due within 7 days.'}
   `.trim();
 
 
@@ -415,8 +419,8 @@ ${notes || 'Payment due within 7 days.'}
         <div style="background:#f9f9f9;padding:24px;border-radius:8px;margin-bottom:32px;position:relative;z-index:1;">
           <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding-bottom:16px;margin-bottom:16px;">
             <div>
-              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Project Description</div>
-              <div style="font-size:16px;font-weight:600;">${projectName || 'Services Rendered'}</div>
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">${descriptionLabel}</div>
+              <div style="font-size:14px;font-weight:600;white-space:pre-line;max-width:300px;line-height:1.4;">${projectName || 'Services Rendered'}</div>
             </div>
             <div style="text-align:right;">
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Total Project Amount</div>
@@ -450,10 +454,9 @@ ${notes || 'Payment due within 7 days.'}
               <span>Grand Total</span>
               <span>${formatCurrency(grandTotal, currency)}</span>
             </div>
-            
-            ${type !== 'Full Payment Invoice' ? `
+            ${type !== 'Full Invoice' ? `
               <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;color:#888;font-style:italic;">
-                <span>Advance Required/Paid</span>
+                <span>${type === 'Advance Invoice' ? 'Advance Required' : 'Advance Paid'}</span>
                 <span>${formatCurrency(advance, currency)}</span>
               </div>
               <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;color:#888;font-style:italic;">
@@ -463,9 +466,15 @@ ${notes || 'Payment due within 7 days.'}
             ` : ''}
 
             <div style="display:flex;justify-content:space-between;padding:16px;margin-top:16px;background:#111;border-radius:8px;font-size:18px;font-weight:900;color:#fff;">
-              <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;align-self:center;">Balance Due</span>
+              <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;align-self:center;">${typeLabel}</span>
               <span>${formatCurrency(amountDue, currency)}</span>
             </div>
+            ${type === 'Advance Invoice' ? `
+              <div style="font-size:10px;color:#666;margin-top:8px;text-align:right;line-height:1.4;">
+                This represents the ${advancePercent}% advance required to commence work.<br/>
+                The remaining <strong>${formatCurrency(remaining, currency)}</strong> will be due upon final delivery.
+              </div>
+            ` : ''}
           </div>
         </div>
 
@@ -477,7 +486,7 @@ ${notes || 'Payment due within 7 days.'}
               ${provider.accNumber ? `<strong>A/C:</strong> ${provider.accNumber} · ` : ''}
               ${provider.ifscCode ? `<strong>IFSC:</strong> ${provider.ifscCode}` : ''}
             </div>
-            <div style="font-size:12px;color:#777;line-height:1.6;white-space:pre-line;">${notes || 'Payment due within 7 days.'}</div>
+            <div style="font-size:12px;color:#777;line-height:1.6;white-space:pre-line;">${type === 'Advance Invoice' ? '<strong>This is an advance invoice.</strong>\n' : ''}${type === 'Final Invoice' ? '<strong>This is a final invoice.</strong>\n' : ''}${notes || 'Payment due within 7 days.'}</div>
           </div>
         </div>
       </div>
