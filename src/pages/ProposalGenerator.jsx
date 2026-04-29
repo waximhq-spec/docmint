@@ -44,9 +44,15 @@ export default function ProposalGenerator() {
   });
   const [doc, setDoc] = useState(null);
 
+  // LISTEN for Global Settings changes from the Sidebar
   useEffect(() => {
-    localStorage.setItem('docmint_provider', JSON.stringify(provider));
-  }, [provider]);
+    const syncSettings = () => {
+      const saved = localStorage.getItem('docmint_provider');
+      if (saved) setProvider(JSON.parse(saved));
+    };
+    window.addEventListener('storage', syncSettings);
+    return () => window.removeEventListener('storage', syncSettings);
+  }, []);
 
   useEffect(() => {
     if (form.clientName && form.projectTitle) {
@@ -55,37 +61,15 @@ export default function ProposalGenerator() {
   }, [form, provider]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const setProv = (k, v) => setProvider(p => ({ ...p, [k]: v }));
 
   return (
     <div className="page-body fade-enter">
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'start' }}>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          
           <div className="card">
-            <div className="card-title">1. Identity & Currency</div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Currency</label>
-                <select value={provider.currency} onChange={e => setProv('currency', e.target.value)}>
-                  <option value="INR">INR (₹)</option>
-                  <option value="BHD">BHD (.د.ب)</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Name / Agency</label>
-                <input value={provider.name} onChange={e => setProv('name', e.target.value)} placeholder="Your Name" />
-              </div>
-              <div className="form-group full">
-                <label>Smart Address Search</label>
-                <LocationInput value={provider.address} onChange={val => setProv('address', val)} />
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-title">2. Client Details</div>
+            <div className="card-title">Project Context</div>
+            <p style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>Using global settings for <strong>{provider.name || 'Your Agency'}</strong> in <strong>{provider.currency}</strong>.</p>
             <div className="form-grid">
               <div className="form-group">
                 <label>Client Name</label>
@@ -99,7 +83,7 @@ export default function ProposalGenerator() {
           </div>
 
           <div className="card">
-            <div className="card-title">3. Project Details</div>
+            <div className="card-title">Project Details</div>
             <div className="form-grid">
               <div className="form-group">
                 <label>Project Type</label>
@@ -116,7 +100,7 @@ export default function ProposalGenerator() {
                 <textarea rows={2} value={form.projectGoal} onChange={e => set('projectGoal', e.target.value)} placeholder="Main objective?" />
               </div>
               <div className="form-group">
-                <label>Budget</label>
+                <label>Budget ({provider.currency})</label>
                 <input type="number" value={form.budget} onChange={e => set('budget', e.target.value)} placeholder="0" />
               </div>
               <div className="form-group">

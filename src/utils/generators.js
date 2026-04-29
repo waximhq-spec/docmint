@@ -52,6 +52,7 @@ export function generateProposal(data, provider) {
 
   const config = PROJECT_CONFIGS[serviceType] || PROJECT_CONFIGS['Video Production'];
   const budgetNum = parseFloat(budget) || 0;
+  const currency = provider.currency || 'INR';
 
   const toneText = config.tone === 'Fast' ? 'We are ready to move quickly' : config.tone === 'Premium' ? 'It is our privilege' : 'We are pleased';
 
@@ -96,7 +97,7 @@ export function generateProposal(data, provider) {
             </tr>
             <tr>
               <td style="padding:16px 0;font-size:16px;"><strong>Total Project Investment</strong></td>
-              <td style="padding:16px 0;text-align:right;font-size:18px;font-weight:900;">${formatCurrency(budgetNum)}</td>
+              <td style="padding:16px 0;text-align:right;font-size:18px;font-weight:900;">${formatCurrency(budgetNum, currency)}</td>
             </tr>
           </table>
         </div>
@@ -136,6 +137,7 @@ export function generateContract(data, provider) {
 
   const config = PROJECT_CONFIGS[serviceType] || PROJECT_CONFIGS['Video Production'];
   const total = parseFloat(totalAmount) || 0;
+  const currency = provider.currency || 'INR';
   const advance = (total * parseFloat(advancePercent)) / 100;
   const balance = total - advance;
 
@@ -163,10 +165,10 @@ export function generateContract(data, provider) {
 
         <div style="margin-bottom:32px;">
           <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">3. Compensation</h2>
-          <p>Total Fee: <strong>${formatCurrency(total)}</strong></p>
+          <p>Total Fee: <strong>${formatCurrency(total, currency)}</strong></p>
           <ul style="margin-top:8px;padding-left:20px;">
-            <li>Advance Payment: ${formatCurrency(advance)} (${advancePercent}%)</li>
-            <li>Final Payment: ${formatCurrency(balance)} (due upon completion)</li>
+            <li>Advance Payment: ${formatCurrency(advance, currency)} (${advancePercent}%)</li>
+            <li>Final Payment: ${formatCurrency(balance, currency)} (due upon completion)</li>
           </ul>
         </div>
 
@@ -219,6 +221,7 @@ export function generateInvoice(data, provider) {
     notes = '',
   } = data;
 
+  const currency = provider.currency || 'INR';
   const subtotalItems = items.reduce((acc, item) => acc + (parseFloat(item.qty) * parseFloat(item.rate) || 0), 0);
   const subtotalExpenses = expenses.reduce((acc, exp) => acc + (parseFloat(exp.amount) || 0), 0);
   const subtotal = subtotalItems + subtotalExpenses;
@@ -251,7 +254,7 @@ export function generateInvoice(data, provider) {
   ` : '';
 
   let qrCodeHtml = '';
-  if (provider.upiId && status !== 'Paid') {
+  if (provider.upiId && status !== 'Paid' && currency === 'INR') {
     const upiLink = `upi://pay?pa=${provider.upiId}&pn=${encodeURIComponent(provider.name)}&am=${amountDue}&cu=INR&tn=${encodeURIComponent('Invoice ' + invoiceNumber)}`;
     const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
     qrCodeHtml = `
@@ -316,8 +319,8 @@ export function generateInvoice(data, provider) {
               <tr style="border-bottom:1px solid #e5e5e5;">
                 <td style="padding:16px 8px;font-size:14px;font-weight:500;">${item.desc}</td>
                 <td style="padding:16px 8px;font-size:14px;text-align:center;">${item.qty}</td>
-                <td style="padding:16px 8px;font-size:14px;text-align:right;">${formatCurrency(item.rate)}</td>
-                <td style="padding:16px 8px;font-size:14px;font-weight:700;text-align:right;">${formatCurrency(item.qty * item.rate)}</td>
+                <td style="padding:16px 8px;font-size:14px;text-align:right;">${formatCurrency(item.rate, currency)}</td>
+                <td style="padding:16px 8px;font-size:14px;font-weight:700;text-align:right;">${formatCurrency(item.qty * item.rate, currency)}</td>
               </tr>
             `).join('')}
             
@@ -328,7 +331,7 @@ export function generateInvoice(data, provider) {
               ${expenses.map(exp => `
                 <tr style="border-bottom:1px solid #e5e5e5;">
                   <td colspan="3" style="padding:12px 8px;font-size:13px;">${exp.desc}</td>
-                  <td style="padding:12px 8px;font-size:13px;font-weight:700;text-align:right;">${formatCurrency(exp.amount)}</td>
+                  <td style="padding:12px 8px;font-size:13px;font-weight:700;text-align:right;">${formatCurrency(exp.amount, currency)}</td>
                 </tr>
               `).join('')}
             ` : ''}
@@ -342,35 +345,35 @@ export function generateInvoice(data, provider) {
           <div style="width:280px;">
             <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#555;">
               <span>Subtotal</span>
-              <span>${formatCurrency(subtotal)}</span>
+              <span>${formatCurrency(subtotal, currency)}</span>
             </div>
             ${discountAmount > 0 ? `
               <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#d93025;">
                 <span>Discount</span>
-                <span>-${formatCurrency(discountAmount)}</span>
+                <span>-${formatCurrency(discountAmount, currency)}</span>
               </div>
             ` : ''}
             ${gstEnabled ? `
               <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#555;">
                 <span>GST (${gstRate}%)</span>
-                <span>${formatCurrency(gstAmount)}</span>
+                <span>${formatCurrency(gstAmount, currency)}</span>
               </div>
             ` : ''}
             <div style="display:flex;justify-content:space-between;padding:12px 0;margin-top:8px;border-top:1px solid #e5e5e5;font-size:15px;font-weight:700;color:#111;">
               <span>Total</span>
-              <span>${formatCurrency(total)}</span>
+              <span>${formatCurrency(total, currency)}</span>
             </div>
             
             ${type !== 'Full Payment' ? `
               <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;color:#888;font-style:italic;">
                 <span>${type === 'Final Invoice' ? 'Advance Paid' : 'Requested'}</span>
-                <span>${formatCurrency(type === 'Final Invoice' ? advancePaid : amountDue)}</span>
+                <span>${formatCurrency(type === 'Final Invoice' ? advancePaid : amountDue, currency)}</span>
               </div>
             ` : ''}
 
             <div style="display:flex;justify-content:space-between;padding:16px;margin-top:16px;background:#111;border-radius:8px;font-size:18px;font-weight:900;color:#fff;">
               <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;align-self:center;">Balance Due</span>
-              <span>${formatCurrency(amountDue)}</span>
+              <span>${formatCurrency(amountDue, currency)}</span>
             </div>
           </div>
         </div>
