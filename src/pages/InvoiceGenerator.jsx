@@ -5,9 +5,9 @@ import { getNextInvoiceNumber, formatCurrency, formatDate } from '../utils/helpe
 import { generateInvoice } from '../utils/generators';
 
 const DEFAULT_PROVIDER = {
-  name: 'Wasim Fayaz',
-  email: 'wasim@example.com',
-  address: 'Kashmir, India',
+  name: '',
+  email: '',
+  address: '',
 };
 
 const DEFAULT_FORM = {

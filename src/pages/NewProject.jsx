@@ -13,9 +13,9 @@ import { getNextInvoiceNumber } from '../utils/helpers';
 const PROJECT_TYPES = ['Video Production', 'Website Development', 'Solar Installation'];
 
 const DEFAULT_PROVIDER = {
-  name: 'Wasim Fayaz',
-  email: 'wasim@example.com',
-  address: 'Kashmir, India',
+  name: '',
+  email: '',
+  address: '',
   phone: '',
 };
 
