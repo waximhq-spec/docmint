@@ -1,11 +1,4 @@
 export default function Dashboard({ onNavigate }) {
-  const stats = [
-    { number: '24', label: 'Documents Generated' },
-    { number: '8', label: 'Active Projects' },
-    { number: '₹3.2L', label: 'Invoiced This Month' },
-    { number: '95%', label: 'Client Approval Rate' },
-  ];
-
   const actions = [
     {
       icon: '📋',
@@ -35,15 +28,6 @@ export default function Dashboard({ onNavigate }) {
 
   return (
     <div className="page-body fade-enter">
-      <div className="dashboard-grid">
-        {stats.map((s, i) => (
-          <div className="stat-card" key={i}>
-            <div className="stat-number">{s.number}</div>
-            <div className="stat-label">{s.label}</div>
-          </div>
-        ))}
-      </div>
-
       <div className="card" style={{ marginBottom: 24 }}>
         <div className="card-title">Quick Actions</div>
         <div className="quick-actions">
