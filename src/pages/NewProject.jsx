@@ -10,6 +10,32 @@ import {
 import { getNextInvoiceNumber, peekInvoiceNumber } from '../utils/helpers';
 import { generateWithAI } from '../utils/ai';
 
+function AIButton({ label, loading, onClick, disabled }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={loading || disabled}
+      style={{
+        padding: '3px 10px',
+        fontSize: 10,
+        fontWeight: 700,
+        border: '1px solid #6366f1',
+        borderRadius: 20,
+        background: loading ? '#f0f0ff' : '#fff',
+        color: '#6366f1',
+        cursor: loading ? 'not-allowed' : 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+        whiteSpace: 'nowrap',
+        opacity: loading ? 0.7 : 1,
+      }}
+    >
+      {loading ? '⏳ Generating...' : `✨ ${label}`}
+    </button>
+  );
+}
+
 const PROJECT_TYPES = [
   'Video Production',
   'Commercial / Ad Shoot',
@@ -70,10 +96,22 @@ export default function NewProject() {
 
   const handleAIScope = async () => {
     setLoadingAI('scope');
-    const prompt = `Draft a professional scope of work for a ${form.projectType} project titled "${form.projectTitle}". 
-    Budget: ${provider.currency} ${form.totalPrice}. Goal: ${form.projectGoal}.
-    Keep it in clear phases/bullet points suitable for an agency proposal.`;
-    const result = await generateWithAI(prompt);
+    const result = await generateWithAI(
+      `You are a professional creative agency assistant.
+
+Create a clear and structured scope of work for a ${form.projectType} project titled "${form.projectTitle}".
+
+Budget: ${provider.currency} ${form.totalPrice || 'TBD'}
+Timeline: ${form.timeline || 'TBD'}
+Goal: ${form.projectGoal || 'To deliver high-quality creative output.'}
+
+Include:
+- Pre-production
+- Production
+- Post-production
+
+Use bullet points. Keep it concise and client-ready. No intro text.`
+    );
     set('scopeOfWork', result);
     setLoadingAI(null);
   };
@@ -81,8 +119,11 @@ export default function NewProject() {
   const handleAIRewrite = async (field, currentText) => {
     if (!currentText) return;
     setLoadingAI(field);
-    const prompt = `Rewrite this for a professional agency document to be more premium and clear: "${currentText}"`;
-    const result = await generateWithAI(prompt);
+    const result = await generateWithAI(
+      `Rewrite this in a more professional, premium agency tone. Return only the rewritten text:
+
+"${currentText}"`
+    );
     set(field, result);
     setLoadingAI(null);
   };
@@ -148,28 +189,14 @@ export default function NewProject() {
               <div className="form-group full">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <label style={{ margin: 0 }}>Project Goal</label>
-                  <button 
-                    className="btn btn-secondary" 
-                    style={{ padding: '2px 8px', fontSize: 10, height: 'auto' }}
-                    onClick={() => handleAIRewrite('projectGoal', form.projectGoal)}
-                    disabled={loadingAI === 'projectGoal'}
-                  >
-                    {loadingAI === 'projectGoal' ? '✨ Processing...' : '✨ Polish with AI'}
-                  </button>
+                  <AIButton label="Polish with AI" loading={loadingAI === 'projectGoal'} onClick={() => handleAIRewrite('projectGoal', form.projectGoal)} />
                 </div>
                 <textarea rows={2} value={form.projectGoal} onChange={e => set('projectGoal', e.target.value)} placeholder="What is the main objective?" />
               </div>
               <div className="form-group full">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <label style={{ margin: 0 }}>Scope of Work</label>
-                  <button 
-                    className="btn btn-secondary" 
-                    style={{ padding: '2px 8px', fontSize: 10, height: 'auto' }}
-                    onClick={handleAIScope}
-                    disabled={loadingAI === 'scope'}
-                  >
-                    {loadingAI === 'scope' ? '✨ Drafting...' : '✨ Generate with AI'}
-                  </button>
+                  <AIButton label="Generate with AI" loading={loadingAI === 'scope'} onClick={handleAIScope} />
                 </div>
                 <textarea rows={4} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="List deliverables or use AI..." />
               </div>

@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import DocOutput from '../components/DocOutput';
-import Toggle from '../components/Toggle';
-import LocationInput from '../components/LocationInput';
 import { generateProposal } from '../utils/generators';
 import { generateWithAI } from '../utils/ai';
 
@@ -15,13 +13,6 @@ const PROJECT_TYPES = [
   'Post-Production / Editing',
 ];
 
-const DEFAULT_PROVIDER = {
-  name: '',
-  email: '',
-  address: '',
-  currency: 'INR',
-};
-
 const DEFAULT_FORM = {
   clientName: '',
   companyName: '',
@@ -33,15 +24,41 @@ const DEFAULT_FORM = {
   budget: '',
   revisions: '',
   includeExclusions: true,
-  tone: 'Premium',
 };
+
+function AIButton({ label, loading, onClick, disabled }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={loading || disabled}
+      style={{
+        padding: '3px 10px',
+        fontSize: 10,
+        fontWeight: 700,
+        border: '1px solid #6366f1',
+        borderRadius: 20,
+        background: loading ? '#f0f0ff' : '#fff',
+        color: '#6366f1',
+        cursor: loading ? 'not-allowed' : 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+        whiteSpace: 'nowrap',
+        transition: 'all 0.2s',
+        opacity: loading ? 0.7 : 1,
+      }}
+    >
+      {loading ? '⏳ Generating...' : `✨ ${label}`}
+    </button>
+  );
+}
 
 export default function ProposalGenerator() {
   const [form, setForm] = useState(DEFAULT_FORM);
-  const [loadingAI, setLoadingAI] = useState(null); // 'scope' | 'goal' | 'rewrite'
+  const [loadingAI, setLoadingAI] = useState(null);
   const [provider, setProvider] = useState(() => {
     const saved = localStorage.getItem('docmint_provider');
-    return saved ? JSON.parse(saved) : DEFAULT_PROVIDER;
+    return saved ? JSON.parse(saved) : { name: '', email: '', address: '', currency: 'INR' };
   });
   const [doc, setDoc] = useState(null);
 
@@ -64,36 +81,65 @@ export default function ProposalGenerator() {
 
   const handleAIScope = async () => {
     setLoadingAI('scope');
-    const prompt = `Create a professional, highly detailed scope of work for a ${form.serviceType} project titled "${form.projectTitle}". 
-    Project Goal: ${form.projectGoal}. 
-    Budget: ${provider.currency} ${form.budget}. 
-    Timeline: ${form.timeline}.
-    Provide a list of deliverables and phases in professional agency language. Keep it concise but premium. No conversational text, just the scope.`;
-    
-    const result = await generateWithAI(prompt);
+    const result = await generateWithAI(
+      `You are a professional creative agency assistant.
+
+Create a clear and structured scope of work for a ${form.serviceType} project titled "${form.projectTitle}".
+
+Budget: ${provider.currency} ${form.budget || 'TBD'}
+Timeline: ${form.timeline || 'TBD'}
+Goal: ${form.projectGoal || 'To deliver a high-quality creative output.'}
+
+Include:
+- Pre-production
+- Production
+- Post-production
+
+Use bullet points. Keep it concise and client-ready. No intro or closing text, just the scope.`
+    );
     set('scopeOfWork', result);
     setLoadingAI(null);
   };
 
-  const handleAIRewrite = async (field, currentText) => {
-    if (!currentText) return;
+  const handleAIRewrite = async (field, text) => {
+    if (!text.trim()) return;
     setLoadingAI(field);
-    const prompt = `Rewrite the following text for a professional agency proposal. Make it sound more premium, clear, and persuasive, but keep the original meaning:
-    "${currentText}"`;
-    
-    const result = await generateWithAI(prompt);
+    const result = await generateWithAI(
+      `Rewrite this in a more professional, clear, and premium agency tone. Return only the rewritten text with no preamble:
+
+"${text}"`
+    );
     set(field, result);
+    setLoadingAI(null);
+  };
+
+  const handleImproveProposal = async () => {
+    if (!doc?.text) return;
+    setLoadingAI('improve');
+    const result = await generateWithAI(
+      `Rewrite this proposal in a more professional, premium, and client-ready tone.
+
+Keep it concise and structured. Avoid generic wording:
+
+${doc.text}`
+    );
+    set('projectGoal', result);
     setLoadingAI(null);
   };
 
   return (
     <div className="page-body fade-enter">
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'start' }}>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           <div className="card">
-            <div className="card-title">Project Context</div>
-            <p style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>Using global settings for <strong>{provider.name || 'Your Agency'}</strong> in <strong>{provider.currency}</strong>.</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <div className="card-title" style={{ margin: 0 }}>Project Context</div>
+              <span style={{ fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 20, background: '#f0f0ff', color: '#6366f1', border: '1px solid #e0e0ff' }}>✨ AI POWERED</span>
+            </div>
+            <p style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>
+              Agency: <strong>{provider.name || 'Not set'}</strong> · Currency: <strong>{provider.currency}</strong>
+            </p>
             <div className="form-grid">
               <div className="form-group">
                 <label>Client Name</label>
@@ -119,43 +165,26 @@ export default function ProposalGenerator() {
                 <label>Project Title</label>
                 <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Brand Film 2025" />
               </div>
-              
               <div className="form-group full">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <label style={{ margin: 0 }}>Project Goal</label>
-                  <button 
-                    className="btn btn-secondary" 
-                    style={{ padding: '2px 8px', fontSize: 10, height: 'auto' }}
-                    onClick={() => handleAIRewrite('projectGoal', form.projectGoal)}
-                    disabled={loadingAI === 'projectGoal'}
-                  >
-                    {loadingAI === 'projectGoal' ? '✨ Processing...' : '✨ Polish with AI'}
-                  </button>
+                  <AIButton label="Polish with AI" loading={loadingAI === 'projectGoal'} onClick={() => handleAIRewrite('projectGoal', form.projectGoal)} />
                 </div>
-                <textarea rows={2} value={form.projectGoal} onChange={e => set('projectGoal', e.target.value)} placeholder="Main objective?" />
+                <textarea rows={2} value={form.projectGoal} onChange={e => set('projectGoal', e.target.value)} placeholder="Describe your main objective..." />
               </div>
-
               <div className="form-group full">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <label style={{ margin: 0 }}>Scope of Work</label>
-                  <button 
-                    className="btn btn-secondary" 
-                    style={{ padding: '2px 8px', fontSize: 10, height: 'auto' }}
-                    onClick={handleAIScope}
-                    disabled={loadingAI === 'scope'}
-                  >
-                    {loadingAI === 'scope' ? '✨ Drafting...' : '✨ Generate with AI'}
-                  </button>
+                  <AIButton label="Generate with AI" loading={loadingAI === 'scope'} onClick={handleAIScope} />
                 </div>
-                <textarea rows={6} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="List specific items or use AI to draft them..." />
+                <textarea rows={7} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="List specific deliverables, or let AI generate a full scope..." />
               </div>
-
               <div className="form-group">
                 <label>Budget ({provider.currency})</label>
                 <input type="number" value={form.budget} onChange={e => set('budget', e.target.value)} placeholder="0" />
               </div>
               <div className="form-group">
-                <label>Timeline Override</label>
+                <label>Timeline</label>
                 <input value={form.timeline} onChange={e => set('timeline', e.target.value)} placeholder="e.g. 4 weeks" />
               </div>
               <div className="form-group">
@@ -165,9 +194,29 @@ export default function ProposalGenerator() {
             </div>
           </div>
 
-          <button className="btn btn-primary" onClick={() => setDoc(generateProposal(form, provider))} style={{ width: '100%', height: 48 }}>
-            Refresh Preview
-          </button>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button className="btn btn-primary" onClick={() => setDoc(generateProposal(form, provider))} style={{ flex: 1, height: 48 }}>
+              Refresh Preview
+            </button>
+            <button
+              onClick={handleImproveProposal}
+              disabled={loadingAI === 'improve' || !doc}
+              style={{
+                height: 48,
+                padding: '0 20px',
+                border: '2px solid #6366f1',
+                borderRadius: 12,
+                background: '#fff',
+                color: '#6366f1',
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {loadingAI === 'improve' ? '⏳ Improving...' : '✨ Improve Proposal'}
+            </button>
+          </div>
         </div>
 
         <div style={{ position: 'sticky', top: 24 }}>
@@ -176,7 +225,7 @@ export default function ProposalGenerator() {
             <DocOutput type="Proposal" html={doc.html} text={doc.text} />
           ) : (
             <div className="card" style={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', borderStyle: 'dashed' }}>
-              Fill details to see preview
+              Fill details to see live preview
             </div>
           )}
         </div>
