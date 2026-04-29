@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import DocOutput from '../components/DocOutput';
 import Toggle from '../components/Toggle';
+import LocationInput from '../components/LocationInput';
 import { generateContract } from '../utils/generators';
 
 const PROJECT_TYPES = [
@@ -17,6 +18,7 @@ const DEFAULT_PROVIDER = {
   name: '',
   email: '',
   address: '',
+  currency: 'INR',
 };
 
 const DEFAULT_FORM = {
@@ -64,15 +66,22 @@ export default function ContractGenerator() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           
           <div className="card">
-            <div className="card-title">1. Legal Identity</div>
+            <div className="card-title">1. Legal Identity & Currency</div>
             <div className="form-grid">
-              <div className="form-group full">
+              <div className="form-group">
+                <label>Contract Currency</label>
+                <select value={provider.currency} onChange={e => setProv('currency', e.target.value)}>
+                  <option value="INR">INR (₹)</option>
+                  <option value="BHD">BHD (.د.ب)</option>
+                </select>
+              </div>
+              <div className="form-group">
                 <label>Registered Name</label>
                 <input value={provider.name} onChange={e => setProv('name', e.target.value)} placeholder="Full Legal Name" />
               </div>
               <div className="form-group full">
-                <label>Address</label>
-                <input value={provider.address} onChange={e => setProv('address', e.target.value)} placeholder="Business Address" />
+                <label>Smart Address Search</label>
+                <LocationInput value={provider.address} onChange={val => setProv('address', val)} />
               </div>
             </div>
           </div>
@@ -81,7 +90,7 @@ export default function ContractGenerator() {
             <div className="card-title">2. Client Details</div>
             <div className="form-grid">
               <div className="form-group">
-                <label>Client Legal Name</label>
+                <label>Client Name</label>
                 <input value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="Recipient Name" />
               </div>
               <div className="form-group">
@@ -102,37 +111,15 @@ export default function ContractGenerator() {
               </div>
               <div className="form-group">
                 <label>Project Title</label>
-                <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Master Services Agreement" />
-              </div>
-              <div className="form-group full">
-                <label>Additional Scope (Optional)</label>
-                <textarea rows={3} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="Add custom deliverables..." />
+                <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="Contract Title" />
               </div>
               <div className="form-group">
-                <label>Total Value (₹)</label>
+                <label>Total Value</label>
                 <input type="number" value={form.totalAmount} onChange={e => set('totalAmount', e.target.value)} placeholder="0" />
               </div>
               <div className="form-group">
                 <label>Advance %</label>
                 <input type="number" value={form.advancePercent} onChange={e => set('advancePercent', e.target.value)} />
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-title">4. Legal Clauses</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div className="toggle-row">
-                <div className="toggle-info">
-                  <div className="toggle-label">Late Payment Penalty</div>
-                </div>
-                <Toggle checked={form.includeLateFee} onChange={v => set('includeLateFee', v)} />
-              </div>
-              <div className="toggle-row">
-                <div className="toggle-info">
-                  <div className="toggle-label">NDA Clause</div>
-                </div>
-                <Toggle checked={form.includeNDA} onChange={v => set('includeNDA', v)} />
               </div>
             </div>
           </div>
@@ -143,7 +130,7 @@ export default function ContractGenerator() {
         </div>
 
         <div style={{ position: 'sticky', top: 24 }}>
-          <div className="card-title" style={{ marginBottom: 12 }}>Live Legal Preview</div>
+          <div className="card-title" style={{ marginBottom: 12 }}>Live Legal Preview ({provider.currency})</div>
           {doc ? (
             <DocOutput type="Contract" html={doc.html} text={doc.text} />
           ) : (

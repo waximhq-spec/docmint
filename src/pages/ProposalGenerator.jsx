@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import DocOutput from '../components/DocOutput';
 import Toggle from '../components/Toggle';
+import LocationInput from '../components/LocationInput';
 import { generateProposal } from '../utils/generators';
 
 const PROJECT_TYPES = [
@@ -13,11 +14,11 @@ const PROJECT_TYPES = [
   'Post-Production / Editing',
 ];
 
-const TONES = ['Formal', 'Premium', 'Friendly'];
-
 const DEFAULT_PROVIDER = {
   name: '',
   email: '',
+  address: '',
+  currency: 'INR',
 };
 
 const DEFAULT_FORM = {
@@ -63,15 +64,22 @@ export default function ProposalGenerator() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           
           <div className="card">
-            <div className="card-title">1. Your Info</div>
+            <div className="card-title">1. Identity & Currency</div>
             <div className="form-grid">
               <div className="form-group">
-                <label>Name / Company</label>
-                <input value={provider.name} onChange={e => setProv('name', e.target.value)} placeholder="Your Name" />
+                <label>Currency</label>
+                <select value={provider.currency} onChange={e => setProv('currency', e.target.value)}>
+                  <option value="INR">INR (₹)</option>
+                  <option value="BHD">BHD (.د.ب)</option>
+                </select>
               </div>
               <div className="form-group">
-                <label>Email</label>
-                <input value={provider.email} onChange={e => setProv('email', e.target.value)} placeholder="your@email.com" />
+                <label>Name / Agency</label>
+                <input value={provider.name} onChange={e => setProv('name', e.target.value)} placeholder="Your Name" />
+              </div>
+              <div className="form-group full">
+                <label>Smart Address Search</label>
+                <LocationInput value={provider.address} onChange={val => setProv('address', val)} />
               </div>
             </div>
           </div>
@@ -107,28 +115,14 @@ export default function ProposalGenerator() {
                 <label>Project Goal</label>
                 <textarea rows={2} value={form.projectGoal} onChange={e => set('projectGoal', e.target.value)} placeholder="Main objective?" />
               </div>
-              <div className="form-group full">
-                <label>Additional Scope Details (Optional)</label>
-                <textarea rows={3} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="Any specific deliverables..." />
-              </div>
               <div className="form-group">
-                <label>Timeline (Optional Override)</label>
-                <input value={form.timeline} onChange={e => set('timeline', e.target.value)} placeholder="Leave blank for auto-calc" />
-              </div>
-              <div className="form-group">
-                <label>Budget (₹)</label>
+                <label>Budget</label>
                 <input type="number" value={form.budget} onChange={e => set('budget', e.target.value)} placeholder="0" />
               </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-title">4. Advanced Options</div>
-            <div className="toggle-row">
-              <div className="toggle-info">
-                <div className="toggle-label">Include Exclusions</div>
+              <div className="form-group">
+                <label>Timeline Override</label>
+                <input value={form.timeline} onChange={e => set('timeline', e.target.value)} placeholder="e.g. 4 weeks" />
               </div>
-              <Toggle checked={form.includeExclusions} onChange={v => set('includeExclusions', v)} />
             </div>
           </div>
 
@@ -138,7 +132,7 @@ export default function ProposalGenerator() {
         </div>
 
         <div style={{ position: 'sticky', top: 24 }}>
-          <div className="card-title" style={{ marginBottom: 12 }}>Live Proposal Preview</div>
+          <div className="card-title" style={{ marginBottom: 12 }}>Live Preview ({provider.currency})</div>
           {doc ? (
             <DocOutput type="Proposal" html={doc.html} text={doc.text} />
           ) : (
