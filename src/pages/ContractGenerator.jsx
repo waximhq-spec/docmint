@@ -3,11 +3,14 @@ import DocOutput from '../components/DocOutput';
 import Toggle from '../components/Toggle';
 import { generateContract } from '../utils/generators';
 
-const SERVICE_TYPES = [
+const PROJECT_TYPES = [
   'Video Production',
-  'Website Development',
-  'Solar Installation',
-  'Consulting',
+  'Commercial / Ad Shoot',
+  'Social Media Content',
+  'Brand Film',
+  'Event Coverage',
+  'Photography',
+  'Post-Production / Editing',
 ];
 
 const DEFAULT_PROVIDER = {
@@ -45,7 +48,6 @@ export default function ContractGenerator() {
     localStorage.setItem('docmint_provider', JSON.stringify(provider));
   }, [provider]);
 
-  // Live preview effect
   useEffect(() => {
     if (form.clientName && form.projectTitle && form.totalAmount) {
       setDoc(generateContract(form, provider));
@@ -59,18 +61,17 @@ export default function ContractGenerator() {
     <div className="page-body fade-enter">
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'start' }}>
         
-        {/* Left: Controls */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           
           <div className="card">
             <div className="card-title">1. Legal Identity</div>
             <div className="form-grid">
               <div className="form-group full">
-                <label>Your Name / Registered Company</label>
+                <label>Registered Name</label>
                 <input value={provider.name} onChange={e => setProv('name', e.target.value)} placeholder="Full Legal Name" />
               </div>
               <div className="form-group full">
-                <label>Registered Address</label>
+                <label>Address</label>
                 <input value={provider.address} onChange={e => setProv('address', e.target.value)} placeholder="Business Address" />
               </div>
             </div>
@@ -81,7 +82,7 @@ export default function ContractGenerator() {
             <div className="form-grid">
               <div className="form-group">
                 <label>Client Legal Name</label>
-                <input value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="Individual or Rep" />
+                <input value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="Recipient Name" />
               </div>
               <div className="form-group">
                 <label>Client Company</label>
@@ -91,28 +92,25 @@ export default function ContractGenerator() {
           </div>
 
           <div className="card">
-            <div className="card-title">3. Contract Details</div>
+            <div className="card-title">3. Project Details</div>
             <div className="form-grid">
+              <div className="form-group">
+                <label>Project Type</label>
+                <select value={form.serviceType} onChange={e => set('serviceType', e.target.value)}>
+                  {PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}
+                </select>
+              </div>
               <div className="form-group">
                 <label>Project Title</label>
                 <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Master Services Agreement" />
               </div>
+              <div className="form-group full">
+                <label>Additional Scope (Optional)</label>
+                <textarea rows={3} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="Add custom deliverables..." />
+              </div>
               <div className="form-group">
                 <label>Total Value (₹)</label>
                 <input type="number" value={form.totalAmount} onChange={e => set('totalAmount', e.target.value)} placeholder="0" />
-              </div>
-              <div className="form-group full">
-                <label>Specific Scope Summary</label>
-                <textarea 
-                  rows={3} 
-                  value={form.scopeOfWork} 
-                  onChange={e => set('scopeOfWork', e.target.value)} 
-                  placeholder="Summarize key deliverables..." 
-                />
-              </div>
-              <div className="form-group">
-                <label>Timeline</label>
-                <input value={form.timeline} onChange={e => set('timeline', e.target.value)} placeholder="e.g. 60 Days" />
               </div>
               <div className="form-group">
                 <label>Advance %</label>
@@ -126,31 +124,15 @@ export default function ContractGenerator() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div className="toggle-row">
                 <div className="toggle-info">
-                  <div className="toggle-label">Ownership Transfer</div>
-                  <div className="toggle-desc">Rights transfer after full payment</div>
-                </div>
-                <Toggle checked={form.includeOwnership} onChange={v => set('includeOwnership', v)} />
-              </div>
-              <div className="toggle-row">
-                <div className="toggle-info">
                   <div className="toggle-label">Late Payment Penalty</div>
-                  <div className="toggle-desc">Include 5% weekly late fee clause</div>
                 </div>
                 <Toggle checked={form.includeLateFee} onChange={v => set('includeLateFee', v)} />
               </div>
               <div className="toggle-row">
                 <div className="toggle-info">
                   <div className="toggle-label">NDA Clause</div>
-                  <div className="toggle-desc">Mutual confidentiality agreement</div>
                 </div>
                 <Toggle checked={form.includeNDA} onChange={v => set('includeNDA', v)} />
-              </div>
-              <div className="toggle-row">
-                <div className="toggle-info">
-                  <div className="toggle-label">Portfolio Rights</div>
-                  <div className="toggle-desc">Allow use of work for marketing</div>
-                </div>
-                <Toggle checked={form.includePortfolio} onChange={v => set('includePortfolio', v)} />
               </div>
             </div>
           </div>
@@ -160,18 +142,16 @@ export default function ContractGenerator() {
           </button>
         </div>
 
-        {/* Right: Preview */}
         <div style={{ position: 'sticky', top: 24 }}>
           <div className="card-title" style={{ marginBottom: 12 }}>Live Legal Preview</div>
           {doc ? (
             <DocOutput type="Contract" html={doc.html} text={doc.text} />
           ) : (
             <div className="card" style={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', borderStyle: 'dashed' }}>
-              Fill client, title, and amount to see preview
+              Fill details to see preview
             </div>
           )}
         </div>
-
       </div>
     </div>
   );

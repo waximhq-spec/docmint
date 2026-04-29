@@ -3,10 +3,14 @@ import DocOutput from '../components/DocOutput';
 import Toggle from '../components/Toggle';
 import { generateProposal } from '../utils/generators';
 
-const SERVICE_TYPES = [
+const PROJECT_TYPES = [
   'Video Production',
-  'Website Development',
-  'Solar Installation',
+  'Commercial / Ad Shoot',
+  'Social Media Content',
+  'Brand Film',
+  'Event Coverage',
+  'Photography',
+  'Post-Production / Editing',
 ];
 
 const TONES = ['Formal', 'Premium', 'Friendly'];
@@ -43,7 +47,6 @@ export default function ProposalGenerator() {
     localStorage.setItem('docmint_provider', JSON.stringify(provider));
   }, [provider]);
 
-  // Live preview effect
   useEffect(() => {
     if (form.clientName && form.projectTitle) {
       setDoc(generateProposal(form, provider));
@@ -57,7 +60,6 @@ export default function ProposalGenerator() {
     <div className="page-body fade-enter">
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'start' }}>
         
-        {/* Left: Controls */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           
           <div className="card">
@@ -89,39 +91,29 @@ export default function ProposalGenerator() {
           </div>
 
           <div className="card">
-            <div className="card-title">3. Project Scope</div>
+            <div className="card-title">3. Project Details</div>
             <div className="form-grid">
               <div className="form-group">
-                <label>Service Type</label>
+                <label>Project Type</label>
                 <select value={form.serviceType} onChange={e => set('serviceType', e.target.value)}>
-                  {SERVICE_TYPES.map(t => <option key={t}>{t}</option>)}
+                  {PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}
                 </select>
               </div>
               <div className="form-group">
                 <label>Project Title</label>
-                <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Brand Refresh 2025" />
+                <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Brand Film 2025" />
               </div>
               <div className="form-group full">
                 <label>Project Goal</label>
-                <textarea 
-                  rows={2} 
-                  value={form.projectGoal} 
-                  onChange={e => set('projectGoal', e.target.value)} 
-                  placeholder="What is the main objective?" 
-                />
+                <textarea rows={2} value={form.projectGoal} onChange={e => set('projectGoal', e.target.value)} placeholder="Main objective?" />
               </div>
               <div className="form-group full">
-                <label>Scope Deliverables</label>
-                <textarea 
-                  rows={4} 
-                  value={form.scopeOfWork} 
-                  onChange={e => set('scopeOfWork', e.target.value)} 
-                  placeholder="List specific items (one per line)..." 
-                />
+                <label>Additional Scope Details (Optional)</label>
+                <textarea rows={3} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="Any specific deliverables..." />
               </div>
               <div className="form-group">
-                <label>Timeline</label>
-                <input value={form.timeline} onChange={e => set('timeline', e.target.value)} placeholder="e.g. 4 weeks" />
+                <label>Timeline (Optional Override)</label>
+                <input value={form.timeline} onChange={e => set('timeline', e.target.value)} placeholder="Leave blank for auto-calc" />
               </div>
               <div className="form-group">
                 <label>Budget (₹)</label>
@@ -132,23 +124,9 @@ export default function ProposalGenerator() {
 
           <div className="card">
             <div className="card-title">4. Advanced Options</div>
-            <div className="form-grid" style={{ marginBottom: 20 }}>
-              <div className="form-group">
-                <label>Tone</label>
-                <select value={form.tone} onChange={e => set('tone', e.target.value)}>
-                  {TONES.map(t => <option key={t}>{t}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Revision Rounds</label>
-                <input type="number" value={form.revisions} onChange={e => set('revisions', e.target.value)} />
-              </div>
-            </div>
-            
             <div className="toggle-row">
               <div className="toggle-info">
                 <div className="toggle-label">Include Exclusions</div>
-                <div className="toggle-desc">List what is NOT included to avoid scope creep</div>
               </div>
               <Toggle checked={form.includeExclusions} onChange={v => set('includeExclusions', v)} />
             </div>
@@ -159,18 +137,16 @@ export default function ProposalGenerator() {
           </button>
         </div>
 
-        {/* Right: Preview */}
         <div style={{ position: 'sticky', top: 24 }}>
           <div className="card-title" style={{ marginBottom: 12 }}>Live Proposal Preview</div>
           {doc ? (
             <DocOutput type="Proposal" html={doc.html} text={doc.text} />
           ) : (
             <div className="card" style={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', borderStyle: 'dashed' }}>
-              Fill client name and title to see preview
+              Fill details to see preview
             </div>
           )}
         </div>
-
       </div>
     </div>
   );

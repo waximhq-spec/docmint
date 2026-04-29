@@ -1,5 +1,43 @@
 import { formatDate, formatCurrency } from '../utils/helpers';
 
+const PROJECT_CONFIGS = {
+  'Video Production': {
+    scope: 'Phase 1: Pre-production (scripting, planning)\nPhase 2: Production (filming, direction)\nPhase 3: Post-production (editing, sound)',
+    timeline: 'Week 1: Planning\nWeek 2: Shoot\nWeek 3: Editing',
+    tone: 'Professional',
+  },
+  'Commercial / Ad Shoot': {
+    scope: 'Phase 1: Concept & Storyboarding\nPhase 2: High-end Production Shoot\nPhase 3: Ad Editing & Color Grading',
+    timeline: 'Week 1: Creative Approval\nWeek 2: Production\nWeek 3: Final Delivery',
+    tone: 'Premium',
+  },
+  'Social Media Content': {
+    scope: 'Phase 1: Content Planning & Hooks\nPhase 2: Batch Production\nPhase 3: Vertical Short-form Editing',
+    timeline: 'Batch delivery within 7-10 days',
+    tone: 'Fast',
+  },
+  'Brand Film': {
+    scope: 'Phase 1: Brand Narrative & Strategy\nPhase 2: Cinematic Film Production\nPhase 3: Narrative Post-production',
+    timeline: '4-6 Weeks for Narrative Excellence',
+    tone: 'Premium',
+  },
+  'Event Coverage': {
+    scope: 'Phase 1: On-site multi-cam coverage\nPhase 2: Event Highlight Editing\nPhase 3: Raw Footage Archive',
+    timeline: 'Highlight Reel within 48 hours',
+    tone: 'Professional',
+  },
+  'Photography': {
+    scope: 'Phase 1: Shoot Session & Lighting\nPhase 2: Image Selection & Review\nPhase 3: Color Correction & Retouching',
+    timeline: 'Delivery within 5 business days',
+    tone: 'Premium',
+  },
+  'Post-Production / Editing': {
+    scope: 'Phase 1: Footage Organization\nPhase 2: Assembly & Story Cut\nPhase 3: Grading, Sound & Mastering',
+    timeline: 'Based on footage volume',
+    tone: 'Professional',
+  },
+};
+
 export function generateProposal(data, provider) {
   const {
     projectGoal = '',
@@ -9,35 +47,13 @@ export function generateProposal(data, provider) {
     budget = '',
     revisions = '2',
     includeExclusions = false,
-    includeAddons = false,
     tone = 'Premium',
   } = data;
 
+  const config = PROJECT_CONFIGS[serviceType] || PROJECT_CONFIGS['Video Production'];
   const budgetNum = parseFloat(budget) || 0;
 
-  // Structured Scope based on service type
-  let structuredScopeHtml = '';
-  if (serviceType === 'Video Production') {
-    structuredScopeHtml = `
-      <div style="margin-bottom:16px;"><strong>Phase 1: Pre-production</strong><br/>Concept development, scriptwriting, and planning.</div>
-      <div style="margin-bottom:16px;"><strong>Phase 2: Production</strong><br/>On-site filming, equipment, and directing.</div>
-      <div style="margin-bottom:16px;"><strong>Phase 3: Post-production</strong><br/>Editing, color grading, sound design, and final delivery.</div>
-    `;
-  } else if (serviceType === 'Website Development') {
-    structuredScopeHtml = `
-      <div style="margin-bottom:16px;"><strong>Phase 1: Design</strong><br/>UI/UX wireframes, visual design, and feedback cycles.</div>
-      <div style="margin-bottom:16px;"><strong>Phase 2: Development</strong><br/>Frontend & backend coding, CMS integration.</div>
-      <div style="margin-bottom:16px;"><strong>Phase 3: Deployment</strong><br/>Testing, bug fixes, and live launch.</div>
-    `;
-  } else {
-    structuredScopeHtml = `
-      <div style="margin-bottom:16px;"><strong>Phase 1: Assessment</strong><br/>Site survey and technical requirement gathering.</div>
-      <div style="margin-bottom:16px;"><strong>Phase 2: Installation</strong><br/>Panel mounting, wiring, and inverter setup.</div>
-      <div style="margin-bottom:16px;"><strong>Phase 3: Support</strong><br/>Connection to grid and post-install maintenance overview.</div>
-    `;
-  }
-
-  const toneText = tone === 'Friendly' ? 'We are super excited' : tone === 'Premium' ? 'It is our privilege' : 'We are pleased';
+  const toneText = config.tone === 'Fast' ? 'We are ready to move quickly' : config.tone === 'Premium' ? 'It is our privilege' : 'We are pleased';
 
   return {
     html: `
@@ -51,19 +67,19 @@ export function generateProposal(data, provider) {
         <div style="margin-bottom:40px;">
           <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">1. Introduction</h2>
           <p>Dear ${data.clientName},</p>
-          <p style="margin-top:12px;">${toneText} to present this proposal for your upcoming project. Based on our preliminary discussions, we have outlined a strategy tailored to help <strong>${data.companyName || data.clientName}</strong> achieve its vision.</p>
+          <p style="margin-top:12px;">${toneText} to present this proposal for your upcoming <strong>${serviceType}</strong> project. Based on our preliminary discussions, we have outlined a strategy tailored to help <strong>${data.companyName || data.clientName}</strong> achieve its vision.</p>
         </div>
 
         <div style="margin-bottom:40px;">
           <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">2. Project Understanding</h2>
-          <p>Based on your requirements, we understand that the primary objective is <strong>${projectGoal}</strong>. To achieve this, we will execute a comprehensive <strong>${serviceType}</strong> strategy focused on high-quality deliverables and measurable results.</p>
+          <p>The primary objective is <strong>${projectGoal || 'to deliver high-quality creative assets'}</strong>. We will execute a comprehensive strategy focused on ${serviceType.toLowerCase()} excellence.</p>
         </div>
 
         <div style="margin-bottom:40px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">3. Structured Scope of Work</h2>
+          <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">3. Tailored Scope of Work</h2>
           <div style="font-size:14px;color:#333;">
-            ${structuredScopeHtml}
-            <div style="margin-top:20px;padding:16px;background:#f9f9f9;border-radius:8px;font-size:13px;white-space:pre-line;"><strong>Specific Deliverables:</strong>\n${scopeOfWork}</div>
+            <div style="white-space:pre-line;line-height:1.8;">${config.scope}</div>
+            ${scopeOfWork ? `<div style="margin-top:20px;padding:16px;background:#f9f9f9;border-radius:8px;font-size:13px;white-space:pre-line;"><strong>Specific Deliverables:</strong>\n${scopeOfWork}</div>` : ''}
           </div>
         </div>
 
@@ -72,7 +88,7 @@ export function generateProposal(data, provider) {
           <table style="width:100%;border-collapse:collapse;margin-top:12px;">
             <tr style="border-bottom:1px solid #eee;">
               <td style="padding:12px 0;">Estimated Timeline</td>
-              <td style="padding:12px 0;text-align:right;font-weight:700;">${timeline}</td>
+              <td style="padding:12px 0;text-align:right;font-weight:700;white-space:pre-line;">${timeline || config.timeline}</td>
             </tr>
             <tr style="border-bottom:1px solid #eee;">
               <td style="padding:12px 0;">Revision Rounds</td>
@@ -89,26 +105,25 @@ export function generateProposal(data, provider) {
         <div style="margin-bottom:40px;">
           <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">5. Exclusions</h2>
           <ul style="font-size:13px;color:#555;padding-left:18px;">
-            <li>Third-party software or license fees.</li>
-            <li>Additional revision rounds beyond the agreed limit.</li>
-            <li>Out-of-scope features or major concept pivots.</li>
+            <li>Third-party costs (location permits, props, talent fees).</li>
+            <li>Additional revisions beyond the agreed ${revisions} rounds.</li>
           </ul>
         </div>` : ''}
 
         <div style="border-top:1px solid #eee;padding-top:40px;margin-top:60px;text-align:center;">
-          <p style="font-size:15px;color:#333;margin-bottom:24px;">We’d be happy to move forward upon your approval.</p>
+          <p style="font-size:15px;color:#333;margin-bottom:24px;">We look forward to moving forward upon your approval.</p>
           <div style="font-size:14px;font-weight:700;">${provider.name}</div>
           <div style="font-size:12px;color:#888;">${provider.email}</div>
         </div>
       </div>
     `,
-    text: `PROPOSAL: ${data.projectTitle}\nClient: ${data.clientName}\nBudget: ${formatCurrency(budgetNum)}`
+    text: `PROPOSAL: ${data.projectTitle}\nProject Type: ${serviceType}`
   };
 }
 
 export function generateContract(data, provider) {
   const {
-    serviceType = '',
+    serviceType = 'Video Production',
     scopeOfWork = '',
     timeline = '',
     totalAmount = '',
@@ -117,10 +132,9 @@ export function generateContract(data, provider) {
     includeOwnership = true,
     includeLateFee = true,
     includeNDA = false,
-    includeCancellation = true,
-    includePortfolio = true,
   } = data;
 
+  const config = PROJECT_CONFIGS[serviceType] || PROJECT_CONFIGS['Video Production'];
   const total = parseFloat(totalAmount) || 0;
   const advance = (total * parseFloat(advancePercent)) / 100;
   const balance = total - advance;
@@ -130,76 +144,62 @@ export function generateContract(data, provider) {
       <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;padding:60px;background:#fff;line-height:1.7;font-size:13px;">
         <div style="text-align:center;margin-bottom:60px;">
           <h1 style="font-size:24px;font-weight:900;letter-spacing:-0.5px;text-transform:uppercase;margin-bottom:4px;">Service Agreement</h1>
-          <p style="color:#888;font-size:12px;">Agreement Ref: ${new Date().getFullYear()}/${Math.floor(Math.random()*9000)+1000}</p>
+          <p style="color:#888;font-size:12px;">Type: ${serviceType}</p>
         </div>
 
         <div style="margin-bottom:32px;">
           <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">1. The Parties</h2>
-          <p>This Service Agreement ("Agreement") is entered into on <strong>${formatDate()}</strong> between:</p>
-          <p style="margin-top:8px;"><strong>Service Provider:</strong> ${provider.name}, located at ${provider.address || 'Registered Address'} ("Provider")</p>
-          <p><strong>Client:</strong> ${data.clientName}${data.companyName ? ', ' + data.companyName : ''} ("Client")</p>
+          <p>This Agreement is entered into on <strong>${formatDate()}</strong> between <strong>${provider.name}</strong> ("Provider") and <strong>${data.clientName}</strong> ("Client").</p>
         </div>
 
         <div style="margin-bottom:32px;">
           <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">2. Scope of Services</h2>
-          <p>The Provider agrees to perform the following services for the Client:</p>
-          <div style="margin-top:12px;padding:16px;background:#f9f9f9;border-radius:4px;white-space:pre-line;"><strong>${data.projectTitle}</strong>\n${scopeOfWork}</div>
+          <p>The Provider agrees to perform the following ${serviceType.toLowerCase()} services:</p>
+          <div style="margin-top:12px;padding:16px;background:#f9f9f9;border-radius:4px;white-space:pre-line;line-height:1.6;">
+            <strong>Core Scope:</strong>\n${config.scope}
+            ${scopeOfWork ? `\n\n<strong>Project-Specific Details:</strong>\n${scopeOfWork}` : ''}
+          </div>
         </div>
 
         <div style="margin-bottom:32px;">
-          <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">3. Compensation & Payment</h2>
-          <p>The Client agrees to pay the Provider a total fee of <strong>${formatCurrency(total)}</strong> for the services described above.</p>
-          <ul style="margin-top:12px;padding-left:20px;">
-            <li><strong>Advance Payment:</strong> ${formatCurrency(advance)} (${advancePercent}% due on signing)</li>
-            <li><strong>Final Payment:</strong> ${formatCurrency(balance)} (due upon completion)</li>
-            <li><strong>Method:</strong> Payment via ${paymentMethod}</li>
+          <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">3. Compensation</h2>
+          <p>Total Fee: <strong>${formatCurrency(total)}</strong></p>
+          <ul style="margin-top:8px;padding-left:20px;">
+            <li>Advance Payment: ${formatCurrency(advance)} (${advancePercent}%)</li>
+            <li>Final Payment: ${formatCurrency(balance)} (due upon completion)</li>
           </ul>
         </div>
 
         <div style="margin-bottom:32px;">
           <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">4. Timeline</h2>
-          <p>The estimated timeframe for completion is <strong>${timeline}</strong>. Delays from the client side (e.g. failure to provide materials or feedback within 48 hours) may affect the final delivery date.</p>
+          <p>The estimated timeframe is <strong>${timeline || config.timeline}</strong> from the date of advance payment.</p>
         </div>
 
         ${includeOwnership ? `
         <div style="margin-bottom:32px;">
           <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">5. Intellectual Property</h2>
-          <p>Upon receipt of full and final payment, all intellectual property rights for the work created under this agreement shall transfer to the Client. The Provider retains ownership until the balance is cleared in full.</p>
-        </div>` : ''}
-
-        ${includeNDA ? `
-        <div style="margin-bottom:32px;">
-          <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">6. Confidentiality (NDA)</h2>
-          <p>Both parties agree to protect and keep confidential any sensitive business information, trade secrets, or proprietary data shared during the course of this project.</p>
+          <p>Rights transfer to the Client after full and final payment.</p>
         </div>` : ''}
 
         ${includeLateFee ? `
         <div style="margin-bottom:32px;">
-          <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">7. Late Payment Terms</h2>
-          <p>Payments not received within 7 days of the invoice date will incur a <strong>5% late fee</strong> for every 7-day period the balance remains outstanding.</p>
-        </div>` : ''}
-
-        ${includeCancellation ? `
-        <div style="margin-bottom:32px;">
-          <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">8. Cancellation Policy</h2>
-          <p>If the Client cancels the project after signing, the advance payment is non-refundable. The Client shall also be liable for all work completed up to the date of cancellation.</p>
+          <h2 style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:8px;">6. Late Payment</h2>
+          <p>A 5% weekly penalty applies to overdue balances.</p>
         </div>` : ''}
 
         <div style="margin-top:80px;display:flex;gap:60px;">
           <div style="flex:1;">
             <div style="height:60px;border-bottom:1px solid #111;margin-bottom:8px;"></div>
             <div style="font-weight:700;">${provider.name}</div>
-            <div style="font-size:11px;color:#888;">Authorized Provider Signature</div>
           </div>
           <div style="flex:1;">
             <div style="height:60px;border-bottom:1px solid #111;margin-bottom:8px;"></div>
             <div style="font-weight:700;">${data.clientName}</div>
-            <div style="font-size:11px;color:#888;">Authorized Client Signature</div>
           </div>
         </div>
       </div>
     `,
-    text: `CONTRACT: ${data.projectTitle}\nClient: ${data.clientName}\nTotal: ${formatCurrency(total)}`
+    text: `CONTRACT: ${data.projectTitle}\nType: ${serviceType}`
   };
 }
 
