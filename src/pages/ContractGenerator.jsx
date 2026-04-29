@@ -3,6 +3,7 @@ import DocOutput from '../components/DocOutput';
 import Toggle from '../components/Toggle';
 import LocationInput from '../components/LocationInput';
 import { generateContract } from '../utils/generators';
+import { generateWithAI } from '../utils/ai';
 
 const PROJECT_TYPES = [
   'Video Production',
@@ -40,13 +41,13 @@ const DEFAULT_FORM = {
 
 export default function ContractGenerator() {
   const [form, setForm] = useState(DEFAULT_FORM);
+  const [loadingAI, setLoadingAI] = useState(null);
   const [provider, setProvider] = useState(() => {
     const saved = localStorage.getItem('docmint_provider');
     return saved ? JSON.parse(saved) : DEFAULT_PROVIDER;
   });
   const [doc, setDoc] = useState(null);
 
-  // LISTEN for Global Settings changes from the Sidebar
   useEffect(() => {
     const syncSettings = () => {
       const saved = localStorage.getItem('docmint_provider');
@@ -63,6 +64,19 @@ export default function ContractGenerator() {
   }, [form, provider]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleAIDraft = async () => {
+    setLoadingAI('contract');
+    const prompt = `Draft a professional legal-style scope of services and payment terms for a creative services contract.
+    Project: ${form.serviceType} - ${form.projectTitle}
+    Total Value: ${provider.currency} ${form.totalAmount}
+    Advance: ${form.advancePercent}%
+    Format as a structured list of obligations and deliverables suitable for a formal agreement. Keep it professional and legally clear.`;
+    
+    const result = await generateWithAI(prompt);
+    set('scopeOfWork', result);
+    setLoadingAI(null);
+  };
 
   return (
     <div className="page-body fade-enter">
@@ -96,6 +110,20 @@ export default function ContractGenerator() {
                 <label>Contract Title</label>
                 <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Master Service Agreement" />
               </div>
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>Service Scope</label>
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ padding: '2px 8px', fontSize: 10, height: 'auto' }}
+                    onClick={handleAIDraft}
+                    disabled={loadingAI === 'contract'}
+                  >
+                    {loadingAI === 'contract' ? '✨ Drafting...' : '✨ Draft with AI'}
+                  </button>
+                </div>
+                <textarea rows={4} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="Describe services or use AI to draft contract language..." />
+              </div>
               <div className="form-group">
                 <label>Total Value ({provider.currency})</label>
                 <input type="number" value={form.totalAmount} onChange={e => set('totalAmount', e.target.value)} placeholder="0" />
@@ -108,7 +136,7 @@ export default function ContractGenerator() {
           </div>
 
           <button className="btn btn-primary" onClick={() => setDoc(generateContract(form, provider))} style={{ width: '100%', height: 48 }}>
-            Refresh Contract Preview
+            Refresh Preview
           </button>
         </div>
 

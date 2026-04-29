@@ -3,6 +3,7 @@ import DocOutput from '../components/DocOutput';
 import Toggle from '../components/Toggle';
 import LocationInput from '../components/LocationInput';
 import { generateProposal } from '../utils/generators';
+import { generateWithAI } from '../utils/ai';
 
 const PROJECT_TYPES = [
   'Video Production',
@@ -30,14 +31,14 @@ const DEFAULT_FORM = {
   scopeOfWork: '',
   timeline: '',
   budget: '',
-  revisions: '', // Empty by default
+  revisions: '',
   includeExclusions: true,
-  includeAddons: false,
   tone: 'Premium',
 };
 
 export default function ProposalGenerator() {
   const [form, setForm] = useState(DEFAULT_FORM);
+  const [loadingAI, setLoadingAI] = useState(null); // 'scope' | 'goal' | 'rewrite'
   const [provider, setProvider] = useState(() => {
     const saved = localStorage.getItem('docmint_provider');
     return saved ? JSON.parse(saved) : DEFAULT_PROVIDER;
@@ -60,6 +61,30 @@ export default function ProposalGenerator() {
   }, [form, provider]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleAIScope = async () => {
+    setLoadingAI('scope');
+    const prompt = `Create a professional, highly detailed scope of work for a ${form.serviceType} project titled "${form.projectTitle}". 
+    Project Goal: ${form.projectGoal}. 
+    Budget: ${provider.currency} ${form.budget}. 
+    Timeline: ${form.timeline}.
+    Provide a list of deliverables and phases in professional agency language. Keep it concise but premium. No conversational text, just the scope.`;
+    
+    const result = await generateWithAI(prompt);
+    set('scopeOfWork', result);
+    setLoadingAI(null);
+  };
+
+  const handleAIRewrite = async (field, currentText) => {
+    if (!currentText) return;
+    setLoadingAI(field);
+    const prompt = `Rewrite the following text for a professional agency proposal. Make it sound more premium, clear, and persuasive, but keep the original meaning:
+    "${currentText}"`;
+    
+    const result = await generateWithAI(prompt);
+    set(field, result);
+    setLoadingAI(null);
+  };
 
   return (
     <div className="page-body fade-enter">
@@ -94,10 +119,37 @@ export default function ProposalGenerator() {
                 <label>Project Title</label>
                 <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Brand Film 2025" />
               </div>
+              
               <div className="form-group full">
-                <label>Project Goal</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>Project Goal</label>
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ padding: '2px 8px', fontSize: 10, height: 'auto' }}
+                    onClick={() => handleAIRewrite('projectGoal', form.projectGoal)}
+                    disabled={loadingAI === 'projectGoal'}
+                  >
+                    {loadingAI === 'projectGoal' ? '✨ Processing...' : '✨ Polish with AI'}
+                  </button>
+                </div>
                 <textarea rows={2} value={form.projectGoal} onChange={e => set('projectGoal', e.target.value)} placeholder="Main objective?" />
               </div>
+
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label style={{ margin: 0 }}>Scope of Work</label>
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ padding: '2px 8px', fontSize: 10, height: 'auto' }}
+                    onClick={handleAIScope}
+                    disabled={loadingAI === 'scope'}
+                  >
+                    {loadingAI === 'scope' ? '✨ Drafting...' : '✨ Generate with AI'}
+                  </button>
+                </div>
+                <textarea rows={6} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="List specific items or use AI to draft them..." />
+              </div>
+
               <div className="form-group">
                 <label>Budget ({provider.currency})</label>
                 <input type="number" value={form.budget} onChange={e => set('budget', e.target.value)} placeholder="0" />
@@ -108,18 +160,13 @@ export default function ProposalGenerator() {
               </div>
               <div className="form-group">
                 <label>Revision Rounds (Optional)</label>
-                <input 
-                  type="number" 
-                  value={form.revisions} 
-                  onChange={e => set('revisions', e.target.value)} 
-                  placeholder="Leave blank to hide" 
-                />
+                <input type="number" value={form.revisions} onChange={e => set('revisions', e.target.value)} placeholder="Leave blank to hide" />
               </div>
             </div>
           </div>
 
           <button className="btn btn-primary" onClick={() => setDoc(generateProposal(form, provider))} style={{ width: '100%', height: 48 }}>
-            Refresh Proposal Preview
+            Refresh Preview
           </button>
         </div>
 
