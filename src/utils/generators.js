@@ -370,11 +370,7 @@ ${type !== 'Full Payment Invoice' ? `- **Advance Amount:** ${formatCurrency(adva
 ${notes || 'Payment due within 7 days.'}
   `.trim();
 
----
 
-**Notes:**
-${notes || 'Payment due within 7 days.'}
-  `.trim();
 
   return {
     html: `
