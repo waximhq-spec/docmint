@@ -1,281 +1,498 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DocOutput from '../components/DocOutput';
 import { generateProposal } from '../utils/generators';
-import { generateWithAI } from '../utils/ai';
 
-const SERVICE_TYPES = ['Video Editing', 'Video Shoot', 'Shoot + Editing'];
-const PROJECT_TYPES = ['Advertisement', 'Social Media Content', 'Brand Film', 'Event'];
-const QUALITY_TIERS = ['Basic', 'Standard', 'Premium'];
-const DURATION_UNITS = ['days', 'weeks', 'months'];
-const REVISION_OPTIONS = ['1', '2', '3', 'Unlimited'];
+// ─── DATA MAPS ──────────────────────────────────────────────
+
+const PROJECT_TYPES = [
+  'Video Production',
+  'Social Media Content',
+  'Branding',
+  'Website / Web Design',
+  'Marketing / Ads',
+  'Retainer',
+  'Custom Project'
+];
+
+const PROJECT_GOALS = {
+  'Video Production': ['Advertisement', 'Brand Film', 'Product Showcase', 'Event Coverage'],
+  'Social Media Content': ['Instagram Growth', 'Content Batch', 'Reels Package'],
+  'Branding': ['Brand Identity', 'Rebranding', 'Logo & Guidelines', 'Brand Strategy'],
+  'Website / Web Design': ['Landing Page', 'Portfolio Website', 'Business Website', 'E-commerce'],
+  'Marketing / Ads': ['Lead Generation', 'Awareness Campaign', 'Product Launch', 'Performance Marketing'],
+  'Retainer': ['Monthly Content', 'Ongoing Marketing', 'Design Support', 'Ad Management'],
+  'Custom Project': ['Custom Goal']
+};
+
+const SCOPE_LEVELS = ['Starter', 'Standard', 'Advanced', 'Custom'];
+
+const DELIVERABLE_TYPES = [
+  { name: 'Videos', icon: '🎥' },
+  { name: 'Reels', icon: '📱' },
+  { name: 'Posts', icon: '🖼️' },
+  { name: 'Website', icon: '🌐' },
+  { name: 'Branding Kit', icon: '🎨' },
+  { name: 'Ads Setup', icon: '🚀' },
+  { name: 'Custom Item', icon: '📦' }
+];
+
+const SCOPE_DESCRIPTIONS = {
+  'Video Production': {
+    'Starter': 'Essential production covering core filming and basic editing.',
+    'Standard': 'Comprehensive production including pre-production planning and multi-camera shoot.',
+    'Advanced': 'Premium cinematic production with full crew and advanced lighting/post.',
+    'Custom': 'Tailored production scope based on specific requirements.'
+  },
+  'Social Media Content': {
+    'Starter': 'Basic content creation for organic growth.',
+    'Standard': 'Strategic content batching with professional editing.',
+    'Advanced': 'High-volume content engine with custom graphics and premium assets.',
+    'Custom': 'Tailored social media scope.'
+  },
+  'Branding': {
+    'Starter': 'Core brand identity: logo, color palette, and typography.',
+    'Standard': 'Comprehensive branding with full visual identity and guidelines.',
+    'Advanced': 'Complete brand ecosystem including deep strategy and collateral.',
+    'Custom': 'Tailored branding scope.'
+  },
+  'Website / Web Design': {
+    'Starter': 'Clean, responsive single-page or essential multi-page website.',
+    'Standard': 'Custom designed multi-page website with CMS and SEO.',
+    'Advanced': 'Bespoke web platform with advanced functionality and premium UI/UX.',
+    'Custom': 'Tailored web development scope.'
+  },
+  'Marketing / Ads': {
+    'Starter': 'Core ad campaign setup and management.',
+    'Standard': 'Multi-channel strategy, creative production, and optimization.',
+    'Advanced': 'Full-funnel strategy, high-end creatives, and deep analytics.',
+    'Custom': 'Tailored marketing scope.'
+  },
+  'Retainer': {
+    'Starter': 'Essential monthly support and maintenance.',
+    'Standard': 'Proactive partnership with dedicated creative hours.',
+    'Advanced': 'Comprehensive agency-of-record partnership.',
+    'Custom': 'Tailored retainer scope.'
+  },
+  'Custom Project': {
+    'Starter': 'Essential customized services.',
+    'Standard': 'Comprehensive customized services.',
+    'Advanced': 'Premium customized services.',
+    'Custom': 'Tailored scope.'
+  }
+};
+
+
+const QUICK_TEMPLATES = {
+  'Social Media Package': {
+    projectTypes: ['Social Media Content'], projectGoals: ['Content Batch'], scopeLevel: 'Standard',
+    deliverablesList: [{ id: 1, type: 'Reels', quantity: 8 }, { id: 2, type: 'Posts', quantity: 12 }],
+    duration: '1', durationUnit: 'months', revisions: '2',
+    totalPrice: '40000', advancePercent: '50', brandTone: 'Friendly',
+  },
+  'Ad Campaign': {
+    projectTypes: ['Marketing / Ads'], projectGoals: ['Lead Generation'], scopeLevel: 'Advanced',
+    deliverablesList: [{ id: 1, type: 'Videos', quantity: 3 }, { id: 2, type: 'Ads Setup', quantity: 1 }],
+    duration: '3', durationUnit: 'weeks', revisions: '3',
+    totalPrice: '75000', advancePercent: '50', brandTone: 'Premium Agency',
+  },
+  'Website Build': {
+    projectTypes: ['Website / Web Design'], projectGoals: ['Business Website'], scopeLevel: 'Standard',
+    deliverablesList: [{ id: 1, type: 'Website', quantity: 1 }],
+    duration: '4', durationUnit: 'weeks', revisions: '2',
+    totalPrice: '120000', advancePercent: '50', brandTone: 'Professional',
+  },
+};
+
+const TONE_CLOSINGS = {
+  'Professional': (brand) => `We look forward to delivering exceptional results for your project.\n\n— ${brand}`,
+  'Premium Agency': (brand) => `Thank you for considering ${brand}. We are committed to crafting work that exceeds expectations.\n\n— ${brand}`,
+  'Friendly': (brand) => `Excited to work with you on this! Reach out with any questions.\n\n— ${brand}`,
+  'Corporate': (brand) => `We appreciate the opportunity to submit this proposal. ${brand} remains committed to professional delivery.\n\n— ${brand}`,
+};
+
+const TONE_OPENERS = {
+  'Professional': (brand, client) => `${brand} is pleased to present this proposal to ${client || 'your team'}.`,
+  'Premium Agency': (brand, client) => `Thank you for choosing ${brand}. We have crafted this proposal specifically for ${client || 'your vision'}.`,
+  'Friendly': (brand, client) => `Hey ${client || 'there'}! We're excited about this project and put together everything you need right here.`,
+  'Corporate': (brand, client) => `${brand} hereby presents the following proposal in response to the requirements outlined by ${client || 'your organization'}.`,
+};
 
 const DEFAULT_FORM = {
-  clientName: '',
-  companyName: '',
-  projectTitle: '',
-  // Structured Inputs
-  serviceType: 'Shoot + Editing',
-  quantity: '3',
-  projectType: 'Advertisement',
-  qualityTier: 'Standard',
-  totalPrice: '10000',
-  advancePercent: '50',
-  duration: '7',
-  durationUnit: 'days',
-  revisionLimit: '2',
-  // Text Outputs (Auto-filled)
-  projectOverview: '',
-  scopeOfWork: '',
-  deliverables: '',
-  timeline: '',
-  pricing: '',
-  revisionPolicy: '',
+  brandName: '', preparedBy: '', brandTone: 'Professional',
+  clientName: '', companyName: '', projectTitle: '',
+  projectTypes: ['Video Production'], projectGoals: ['Advertisement'], scopeLevel: 'Standard',
+  deliverablesList: [{ id: Date.now(), type: 'Videos', quantity: 1 }],
+  duration: '2', durationUnit: 'weeks', revisions: '2',
+  totalPrice: '', advancePercent: '50',
   notes: '',
 };
 
-function AIButton({ label, loading, onClick, disabled }) {
+// ─── COMPONENTS ──────────────────────────────────────────────
+
+function Step({ number, title, active, onClick, children }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={loading || disabled}
-      style={{
-        padding: '3px 10px',
-        fontSize: 10,
-        fontWeight: 700,
-        border: '1px solid #6366f1',
-        borderRadius: 20,
-        background: loading ? '#f0f0ff' : '#fff',
-        color: '#6366f1',
-        cursor: loading ? 'not-allowed' : 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4,
-        whiteSpace: 'nowrap',
-        transition: 'all 0.2s',
-        opacity: loading ? 0.7 : 1,
-      }}
-    >
-      {loading ? '⏳...' : `✨ ${label}`}
-    </button>
+    <div className={`step-item ${active ? 'active' : ''}`}>
+      <div className="step-header" onClick={onClick}>
+        <div className="step-title">
+          <div className="step-number">{number}</div>
+          {title}
+        </div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: active ? 'rotate(180deg)' : 'none', transition: '0.3s' }}>
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+      <div className="step-content">
+        {children}
+      </div>
+    </div>
   );
 }
 
+function ChipSelector({ options, value, onChange, isMulti }) {
+  const handleClick = (opt) => {
+    if (isMulti) {
+      const current = Array.isArray(value) ? value : [value];
+      if (current.includes(opt)) {
+        if (current.length > 1) onChange(current.filter(i => i !== opt));
+      } else {
+        onChange([...current, opt]);
+      }
+    } else {
+      onChange(opt);
+    }
+  };
+
+  const isActive = (opt) => isMulti ? (Array.isArray(value) && value.includes(opt)) : (value === opt);
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      {options.map(opt => (
+        <button key={opt} onClick={() => handleClick(opt)} className={`chip-btn ${isActive(opt) ? 'active' : ''}`}>{opt}</button>
+      ))}
+    </div>
+  );
+}
+
+// ─── BUILD ENGINE ────────────────────────────────────────────
+
+function buildProposalData(form) {
+  const currency = 'INR';
+  const total = parseFloat(form.totalPrice) || 0;
+  const advPct = parseFloat(form.advancePercent) || 50;
+  const advance = (total * advPct) / 100;
+  const balance = total - advance;
+
+  const durationText = `${form.duration} ${form.durationUnit}`;
+  const types = form.projectTypes;
+  const goals = form.projectGoals;
+
+  // Overview
+  const opener = TONE_OPENERS[form.brandTone] || TONE_OPENERS['Professional'];
+  const projectOverview = opener(form.brandName || 'Our Agency', form.clientName);
+
+  // Grouped Deliverables
+  const categories = {};
+  form.deliverablesList.forEach(d => {
+    if (!categories[d.type]) categories[d.type] = 0;
+    categories[d.type] += d.quantity;
+  });
+
+  let delivHtml = '<div style="display:grid;gap:12px;">';
+  Object.entries(categories).forEach(([type, qty]) => {
+    const icon = DELIVERABLE_TYPES.find(t => t.name === type)?.icon || '📦';
+    delivHtml += `
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f9f9f9;border-radius:8px;border:1px solid #eee;">
+        <span style="font-size:20px;">${icon}</span>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#111;">${qty} ${qty === 1 ? type.replace(/s$/, '') : type}</div>
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Deliverable Item</div>
+        </div>
+      </div>
+    `;
+  });
+  delivHtml += '</div>';
+
+  // Scope
+  const scopeDescs = types.map(t => (SCOPE_DESCRIPTIONS[t] && SCOPE_DESCRIPTIONS[t][form.scopeLevel]) || 'Custom project scope.');
+  const uniqueScopeDescs = Array.from(new Set(scopeDescs));
+  const scopeText = uniqueScopeDescs.join(' ');
+
+  // Pricing
+  const fmt = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 0 }).format(n);
+  const pricingHtml = `
+    <div style="display:grid;gap:8px;max-width:300px;">
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;">
+        <span style="color:#666;">Total Investment</span>
+        <span style="font-weight:800;color:#111;">${fmt(total)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;">
+        <span style="color:#666;">Advance (${advPct}%)</span>
+        <span style="font-weight:700;color:#111;">${fmt(advance)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;margin-top:4px;">
+        <span style="font-weight:700;color:#111;">Remaining</span>
+        <span style="font-weight:800;color:#000;">${fmt(balance)}</span>
+      </div>
+    </div>
+  `;
+
+  return {
+    projectTitle: form.projectTitle,
+    clientName: form.clientName,
+    companyName: form.companyName,
+    brandName: form.brandName,
+    preparedBy: form.preparedBy,
+    brandTone: form.brandTone,
+    projectOverview,
+    scopeOfWork: scopeText,
+    deliverables: delivHtml, // passing HTML here to generators
+    timeline: `${form.duration} ${form.durationUnit} from project kickoff`,
+    revisionPolicy: `Includes ${form.revisions === 'Unlimited' ? 'unlimited' : form.revisions} rounds of revisions.`,
+    pricing: pricingHtml,
+    notes: form.notes,
+    closingLine: (TONE_CLOSINGS[form.brandTone] || TONE_CLOSINGS['Professional'])(form.brandName || 'Our Agency'),
+    projectType: types.join(', '),
+    projectGoal: goals.join(', '),
+    scopeLevel: form.scopeLevel,
+  };
+}
+
+const RECOMMENDED_DELIVERABLES = {
+  'Video Production': 'Videos',
+  'Social Media Content': 'Reels',
+  'Branding': 'Branding Kit',
+  'Website / Web Design': 'Website',
+  'Marketing / Ads': 'Ads Setup',
+  'Retainer': 'Custom Item',
+  'Custom Project': 'Custom Item'
+};
+
+// ─── MAIN COMPONENT ──────────────────────────────────────────
+
 export default function ProposalGenerator() {
   const [form, setForm] = useState(DEFAULT_FORM);
-  const [loadingAI, setLoadingAI] = useState(null);
+  const [activeStep, setActiveStep] = useState(1);
   const [mobileTab, setMobileTab] = useState('edit');
-  const [provider, setProvider] = useState(() => {
-    const saved = localStorage.getItem('docmint_provider');
-    return saved ? JSON.parse(saved) : { name: '', email: '', address: '', currency: 'INR' };
-  });
   const [doc, setDoc] = useState(null);
-
-  const formatCurrency = (val) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: provider.currency || 'INR',
-      maximumFractionDigits: 0
-    }).format(val);
-  };
+  const [savedPresets, setSavedPresets] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('docmint_proposal_presets') || '[]'); } catch { return []; }
+  });
+  const [provider] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('docmint_provider') || '{}'); } catch { return {}; }
+  });
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  // AUTO-GENERATION LOGIC
-  useEffect(() => {
-    const qty = form.quantity || '0';
-    const type = form.projectType || 'Project';
-    const service = form.serviceType || 'Services';
-    const tier = form.qualityTier || 'Standard';
+  const handleProjectTypeChange = (types) => {
+    const allAvailableGoals = types.flatMap(t => PROJECT_GOALS[t] || []);
+    const newSelectedGoals = form.projectGoals.filter(g => allAvailableGoals.includes(g));
+    if (newSelectedGoals.length === 0 && allAvailableGoals.length > 0) newSelectedGoals.push(allAvailableGoals[0]);
+    setForm(f => ({ ...f, projectTypes: types, projectGoals: newSelectedGoals }));
+  };
 
-    // 1. Scope
-    const autoScope = `- ${qty} ${type.toLowerCase()} video(s)\n- Includes ${service.toLowerCase()}\n- ${tier} production quality`;
-    
-    // 2. Deliverables
-    const autoDeliv = `- ${qty} final edited video(s)\n- Platform-ready formats`;
-
-    // 3. Timeline
-    const autoTimeline = `Project will be completed within ${form.duration} ${form.durationUnit} from project start.`;
-
-    // 4. Pricing
-    const total = parseFloat(form.totalPrice) || 0;
-    const advP = parseFloat(form.advancePercent) || 0;
-    const advAmt = (total * advP) / 100;
-    const remAmt = total - advAmt;
-    const autoPricing = `Total Project Amount: ${formatCurrency(total)}\nAdvance Required (${advP}%): ${formatCurrency(advAmt)}\nRemaining Balance: ${formatCurrency(remAmt)}`;
-
-    // 5. Revisions
-    const autoRev = `Includes up to ${form.revisionLimit} rounds of revisions.`;
-
-    setForm(f => ({
-      ...f,
-      scopeOfWork: f.scopeOfWork || autoScope,
-      deliverables: f.deliverables || autoDeliv,
-      timeline: f.timeline || autoTimeline,
-      pricing: f.pricing || autoPricing,
-      revisionPolicy: f.revisionPolicy || autoRev,
+  const addDeliverable = () => {
+    const firstType = form.projectTypes[0] || 'Video Production';
+    const defaultType = RECOMMENDED_DELIVERABLES[firstType] || 'Videos';
+    setForm(f => ({ 
+      ...f, 
+      deliverablesList: [...f.deliverablesList, { id: Date.now(), type: defaultType, quantity: 1 }] 
     }));
-  }, [form.serviceType, form.quantity, form.projectType, form.qualityTier, form.duration, form.durationUnit, form.totalPrice, form.advancePercent, form.revisionLimit]);
+  };
 
+  const updateDeliverable = (id, field, value) => {
+    setForm(f => ({ ...f, deliverablesList: f.deliverablesList.map(d => d.id === id ? { ...d, [field]: value } : d) }));
+  };
+
+  const removeDeliverable = (id) => {
+    setForm(f => ({ ...f, deliverablesList: f.deliverablesList.filter(d => d.id !== id) }));
+  };
+
+  const proposalData = buildProposalData(form);
   useEffect(() => {
-    if (form.clientName && form.projectTitle) {
-      setDoc(generateProposal(form, provider));
-    }
+    if (form.clientName && form.projectTitle) setDoc(generateProposal(proposalData, provider));
   }, [form, provider]);
 
-  const handleAIPolish = async (field, text) => {
-    if (!text.trim()) return;
-    setLoadingAI(field);
-    const result = await generateWithAI(
-      `Polish this text for a professional agency proposal. Make it sound premium and clear. Return ONLY the polished text. No markdown, no expansion:\n\n"${text}"`
-    );
-    set(field, result);
-    setLoadingAI(null);
-  };
+  const availableGoals = Array.from(new Set(form.projectTypes.flatMap(t => PROJECT_GOALS[t] || ['Custom Goal'])));
 
   return (
     <div className="fade-enter">
       <div className="mobile-view-tabs">
-        <button className={`mobile-view-tab ${mobileTab === 'edit' ? 'active' : ''}`} onClick={() => setMobileTab('edit')}>✏️ Edit</button>
-        <button className={`mobile-view-tab ${mobileTab === 'preview' ? 'active' : ''}`} onClick={() => setMobileTab('preview')}>👁 Preview</button>
+        <button className={`mobile-view-tab ${mobileTab === 'edit' ? 'active' : ''}`} onClick={() => setMobileTab('edit')}>Editor</button>
+        <button className={`mobile-view-tab ${mobileTab === 'preview' ? 'active' : ''}`} onClick={() => setMobileTab('preview')}>Preview</button>
       </div>
+
       <div className="page-body">
-        <div className="two-col-layout">
-          <div style={{ display: mobileTab === 'edit' ? 'flex' : 'none', flexDirection: 'column', gap: 16 }}>
-          {/* SECTION 0: CONTEXT */}
-          <div className="card">
-            <div className="card-title">1. Recipient Information</div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Client Name</label>
-                <input value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="Recipient Name" />
-              </div>
-              <div className="form-group">
-                <label>Company Name</label>
-                <input value={form.companyName} onChange={e => set('companyName', e.target.value)} placeholder="Optional" />
-              </div>
-              <div className="form-group full">
-                <label>Project Title</label>
-                <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Brand Film 2025" />
-              </div>
+        <div className="two-col-layout" style={{ gap: 32 }}>
+
+          {/* ── FORM COL ── */}
+          <div className="form-col" style={{ display: mobileTab === 'edit' ? 'flex' : 'none', flexDirection: 'column', gap: 20 }}>
+            
+            <div className="step-accordion">
+              {/* Step 1 */}
+              <Step number="1" title="Client & Identity" active={activeStep === 1} onClick={() => setActiveStep(1)}>
+                <div className="form-grid" style={{ marginBottom: 20 }}>
+                  <div className="form-group">
+                    <label>Brand Name</label>
+                    <input value={form.brandName} onChange={e => set('brandName', e.target.value)} placeholder="e.g. Studio Noir" />
+                  </div>
+                  <div className="form-group">
+                    <label>Prepared By</label>
+                    <input value={form.preparedBy} onChange={e => set('preparedBy', e.target.value)} placeholder="Your name" />
+                  </div>
+                </div>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Client Name*</label>
+                    <input value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="Recipient name" />
+                  </div>
+                  <div className="form-group">
+                    <label>Company</label>
+                    <input value={form.companyName} onChange={e => set('companyName', e.target.value)} placeholder="Optional" />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Project Title*</label>
+                    <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Q4 Ad Campaign" />
+                  </div>
+                </div>
+              </Step>
+
+              {/* Step 2 */}
+              <Step number="2" title="Project Setup" active={activeStep === 2} onClick={() => setActiveStep(2)}>
+                <div className="form-group" style={{ marginBottom: 20 }}>
+                  <label>Project Type</label>
+                  <ChipSelector isMulti options={PROJECT_TYPES} value={form.projectTypes} onChange={handleProjectTypeChange} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 20 }}>
+                  <label>Goals</label>
+                  <ChipSelector isMulti options={availableGoals} value={form.projectGoals} onChange={v => set('projectGoals', v)} />
+                </div>
+                <div className="form-group">
+                  <label>Scope Level</label>
+                  <ChipSelector options={SCOPE_LEVELS} value={form.scopeLevel} onChange={v => set('scopeLevel', v)} />
+                </div>
+              </Step>
+
+              {/* Step 3 */}
+              <Step number="3" title="Deliverables" active={activeStep === 3} onClick={() => setActiveStep(3)}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {form.deliverablesList.map((deliv) => {
+                    const icon = DELIVERABLE_TYPES.find(t => t.name === deliv.type)?.icon || '📦';
+                    return (
+                      <div key={deliv.id} className="deliverable-card">
+                        <div className="deliv-icon">{icon}</div>
+                        <div className="deliv-info" style={{ position: 'relative' }}>
+                          <select 
+                            value={deliv.type} 
+                            onChange={(e) => updateDeliverable(deliv.id, 'type', e.target.value)} 
+                            style={{ 
+                              width: '100%',
+                              padding: '6px 12px',
+                              fontSize: '14px',
+                              fontWeight: 600,
+                              color: 'var(--text-primary)',
+                              background: 'var(--bg-secondary)',
+                              border: '1px solid var(--border)',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              appearance: 'auto'
+                            }}
+                          >
+                            {DELIVERABLE_TYPES.map(t => <option key={t.name}>{t.name}</option>)}
+                          </select>
+                        </div>
+                        <div className="deliv-controls">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f5f5f5', borderRadius: 6, padding: '2px 8px' }}>
+                            <button onClick={() => updateDeliverable(deliv.id, 'quantity', Math.max(1, deliv.quantity - 1))} style={{ border: 'none', background: 'none', cursor: 'pointer' }}>-</button>
+                            <span style={{ fontSize: 13, fontWeight: 700, minWidth: 20, textAlign: 'center' }}>{deliv.quantity}</span>
+                            <button onClick={() => updateDeliverable(deliv.id, 'quantity', deliv.quantity + 1)} style={{ border: 'none', background: 'none', cursor: 'pointer' }}>+</button>
+                          </div>
+                          <div className="deliv-remove" onClick={() => removeDeliverable(deliv.id)}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <button className="btn btn-outline" onClick={addDeliverable} style={{ width: '100%', borderStyle: 'dashed' }}>+ Add Item</button>
+                </div>
+              </Step>
+
+              {/* Step 4 */}
+              <Step number="4" title="Timeline & Revisions" active={activeStep === 4} onClick={() => setActiveStep(4)}>
+                <div className="form-group" style={{ marginBottom: 20 }}>
+                  <label>Duration</label>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <input type="number" value={form.duration} onChange={e => set('duration', e.target.value)} style={{ width: 80 }} />
+                    <select value={form.durationUnit} onChange={e => set('durationUnit', e.target.value)} style={{ flex: 1 }}>
+                      {['days', 'weeks', 'months'].map(u => <option key={u}>{u}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Revisions</label>
+                  <ChipSelector options={['1', '2', '3', 'Unlimited']} value={form.revisions} onChange={v => set('revisions', v)} />
+                </div>
+              </Step>
+
+              {/* Step 5 */}
+              <Step number="5" title="Investment" active={activeStep === 5} onClick={() => setActiveStep(5)}>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Total Price (INR)</label>
+                    <input type="number" value={form.totalPrice} onChange={e => set('totalPrice', e.target.value)} placeholder="e.g. 50000" />
+                  </div>
+                  <div className="form-group">
+                    <label>Advance %</label>
+                    <input type="number" value={form.advancePercent} onChange={e => set('advancePercent', e.target.value)} />
+                  </div>
+                </div>
+              </Step>
+
+              {/* Step 6 */}
+              <Step number="6" title="Additional Notes" active={activeStep === 6} onClick={() => setActiveStep(6)}>
+                <div className="form-group">
+                  <label>Exclusions & Terms</label>
+                  <textarea rows={4} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Any specific terms..." />
+                </div>
+              </Step>
             </div>
+            
+            <button className="btn btn-primary" style={{ height: 48, borderRadius: 12 }} disabled={!form.clientName || !form.projectTitle} onClick={() => setDoc(generateProposal(proposalData, provider))}>Generate Proposal</button>
           </div>
 
-          {/* SECTION 1: SERVICE CONFIGURATION */}
-          <div className="card">
-            <div className="card-title">2. Service Configuration</div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Service Type</label>
-                <select value={form.serviceType} onChange={e => set('serviceType', e.target.value)}>
-                  {SERVICE_TYPES.map(t => <option key={t}>{t}</option>)}
-                </select>
+          {/* ── PREVIEW COL ── */}
+          <div className="preview-panel" style={{ display: mobileTab === 'preview' ? 'block' : 'none' }}>
+            {doc ? <DocOutput type="Proposal" html={doc.html} text={doc.text} /> : (
+              <div className="card" style={{ height: 400, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', borderStyle: 'dashed', borderRadius: 16 }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📄</div>
+                <div style={{ fontWeight: 600 }}>Fill required fields to preview</div>
               </div>
-              <div className="form-group">
-                <label>Quantity</label>
-                <input type="number" value={form.quantity} onChange={e => set('quantity', e.target.value)} placeholder="1" />
-              </div>
-              <div className="form-group">
-                <label>Project Type</label>
-                <select value={form.projectType} onChange={e => set('projectType', e.target.value)}>
-                  {PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Quality Tier</label>
-                <select value={form.qualityTier} onChange={e => set('qualityTier', e.target.value)}>
-                  {QUALITY_TIERS.map(t => <option key={t}>{t}</option>)}
-                </select>
-              </div>
-            </div>
-          </div>
+            )}
 
-          {/* SECTION 2 & 3: SCOPE & DELIVERABLES */}
-          <div className="card">
-            <div className="card-title">3. Scope & Deliverables</div>
-            <div className="form-group full" style={{ marginBottom: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <label style={{ margin: 0 }}>Scope of Work</label>
-                <AIButton label="Polish" loading={loadingAI === 'scopeOfWork'} onClick={() => handleAIPolish('scopeOfWork', form.scopeOfWork)} />
-              </div>
-              <textarea rows={3} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} />
-            </div>
-            <div className="form-group full">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <label style={{ margin: 0 }}>Deliverables</label>
-                <AIButton label="Polish" loading={loadingAI === 'deliverables'} onClick={() => handleAIPolish('deliverables', form.deliverables)} />
-              </div>
-              <textarea rows={2} value={form.deliverables} onChange={e => set('deliverables', e.target.value)} />
-            </div>
-          </div>
-
-          {/* SECTION 4: TIMELINE & REVISIONS */}
-          <div className="card">
-            <div className="card-title">4. Timeline & Revisions</div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Duration</label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input type="number" style={{ flex: 1 }} value={form.duration} onChange={e => set('duration', e.target.value)} />
-                  <select style={{ flex: 1 }} value={form.durationUnit} onChange={e => set('durationUnit', e.target.value)}>
-                    {DURATION_UNITS.map(u => <option key={u}>{u}</option>)}
-                  </select>
+            {/* Smart Live Summary */}
+            <div className="card" style={{ marginTop: 24, borderRadius: 16 }}>
+              <div className="card-title">Live Summary</div>
+              <div className="summary-grid">
+                <div className="summary-item">
+                  <div className="summary-label">Types</div>
+                  <div className="summary-value">{form.projectTypes.join(', ')}</div>
+                </div>
+                <div className="summary-item">
+                  <div className="summary-label">Deliverables</div>
+                  <div className="summary-value">{form.deliverablesList.length} Items</div>
+                </div>
+                <div className="summary-item">
+                  <div className="summary-label">Timeline</div>
+                  <div className="summary-value">{form.duration} {form.durationUnit}</div>
+                </div>
+                <div className="summary-item">
+                  <div className="summary-label">Price</div>
+                  <div className="summary-value">{form.totalPrice ? `₹${parseInt(form.totalPrice).toLocaleString()}` : '—'}</div>
                 </div>
               </div>
-              <div className="form-group">
-                <label>Revision Policy</label>
-                <select value={form.revisionLimit} onChange={e => set('revisionLimit', e.target.value)}>
-                  {REVISION_OPTIONS.map(o => <option key={o}>{o} Rounds</option>)}
-                </select>
-              </div>
-            </div>
-            <div className="form-group full" style={{ marginTop: 16 }}>
-              <textarea rows={2} value={form.timeline} onChange={e => set('timeline', e.target.value)} />
             </div>
           </div>
 
-          {/* SECTION 5: PRICING */}
-          <div className="card">
-            <div className="card-title">5. Pricing</div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Total Price ({provider.currency})</label>
-                <input type="number" value={form.totalPrice} onChange={e => set('totalPrice', e.target.value)} placeholder="0" />
-              </div>
-              <div className="form-group">
-                <label>Advance %</label>
-                <input type="number" value={form.advancePercent} onChange={e => set('advancePercent', e.target.value)} placeholder="50" />
-              </div>
-            </div>
-            <div className="form-group full" style={{ marginTop: 16 }}>
-              <textarea rows={2} value={form.pricing} readOnly style={{ background: '#f5f5f5', color: '#666' }} />
-              <div style={{ fontSize: 9, color: '#888', marginTop: 4 }}>Pricing text is auto-calculated based on inputs above.</div>
-            </div>
-          </div>
-
-          {/* SECTION 6: NOTES */}
-          <div className="card">
-            <div className="card-title">6. Notes & Exclusions</div>
-            <div className="form-group full">
-              <textarea rows={3} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Add any special conditions or exclusions here..." />
-              <div style={{ fontSize: 10, color: '#888', marginTop: 4 }}>Keep this section brief. Detailed terms should be in the contract.</div>
-            </div>
-          </div>
-
-          <button className="btn btn-primary" onClick={() => setDoc(generateProposal(form, provider))} style={{ marginTop: 8 }}>
-            Finalize Proposal
-          </button>
-          </div>
-
-          <div className="preview-panel" style={{ display: mobileTab === 'preview' ? 'block' : 'none' }}>
-          <div className="card-title" style={{ marginBottom: 12 }}>Live Preview ({provider.currency})</div>
-          {doc ? (
-            <DocOutput type="Proposal" html={doc.html} text={doc.text} />
-          ) : (
-            <div className="card" style={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', borderStyle: 'dashed' }}>
-              Fill details to see live preview
-            </div>
-          )}
-          </div>
         </div>
       </div>
     </div>

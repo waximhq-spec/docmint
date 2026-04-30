@@ -43,6 +43,9 @@ export function generateProposal(data, provider) {
     projectTitle = '',
     clientName = '',
     companyName = '',
+    brandName = '',
+    preparedBy = '',
+    brandTone = 'Professional',
     projectOverview = '',
     scopeOfWork = '',
     deliverables = '',
@@ -50,111 +53,146 @@ export function generateProposal(data, provider) {
     pricing = '',
     revisionPolicy = '',
     notes = '',
+    closingLine = '',
+    projectType = '',
+    projectGoal = '',
+    scopeLevel = '',
+    duration = '',
+    durationUnit = '',
+    revisions = '',
+    totalPrice = '',
+    advancePercent = '',
   } = data;
 
-  const currency = provider.currency || 'INR';
+  const agencyName = brandName || provider.name || 'Our Agency';
+  const date = formatDate();
 
   const fullText = `
-# PROPOSAL: ${projectTitle}
-**Prepared for:** ${clientName} ${companyName ? `(${companyName})` : ''}
-**Date:** ${formatDate()}
+# PROPOSAL — ${projectTitle}
+**Prepared for:** ${clientName}${companyName ? ` (${companyName})` : ''}
+**Prepared by:** ${agencyName}${preparedBy ? ` · ${preparedBy}` : ''}
+**Date:** ${date}
 
 ---
 
-## 1. Project Overview
-${projectOverview || 'A comprehensive strategy tailored to help you achieve your vision.'}
+## Overview
+${projectOverview}
 
 ---
 
-## 2. Scope of Work
-${scopeOfWork || 'Strategic execution of project requirements.'}
+## Scope of Work
+${scopeOfWork}
 
 ---
 
-## 3. Deliverables
-${deliverables || 'As discussed.'}
+## Deliverables
+${deliverables}
 
 ---
 
-## 4. Timeline
-${timeline || 'TBD'}
+## Timeline
+${timeline}
 
 ---
 
-## 5. Pricing
-${pricing || 'TBD'}
+## Revision Policy
+${revisionPolicy}
 
 ---
 
-## 6. Revision Policy
-${revisionPolicy || 'Standard revisions apply.'}
+## Investment
+${pricing}
 
 ---
 
-## 7. Notes / Exclusions
-${notes || 'Standard terms and conditions apply.'}
+## Notes
+${notes || 'Standard terms and conditions apply. All deliverables subject to agreed timeline upon project kick-off.'}
 
 ---
 
-We look forward to moving forward upon your approval.
-
-**${provider.name}**
-${provider.email}
+${closingLine || `We look forward to working with you. — ${agencyName}`}
   `.trim();
 
-  return {
-    html: `
-      <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;padding:40px;background:#fff;line-height:1.6;">
-        <div style="margin-bottom:60px;border-bottom:1px solid #eee;padding-bottom:24px;">
-          <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:8px;">Proposal For</div>
-          <h1 style="font-size:28px;font-weight:900;letter-spacing:-0.5px;margin-bottom:4px;">${projectTitle}</h1>
-          <p style="color:#555;font-size:14px;">Prepared for ${clientName} · ${formatDate()}</p>
-        </div>
+  const html = `
+    <div style="font-family:Inter,sans-serif;color:#111;max-width:720px;margin:0 auto;padding:48px 40px;background:#fff;line-height:1.7;font-size:13px;">
 
-        <div style="margin-bottom:40px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">1. Project Overview</h2>
-          <div style="white-space:pre-line;">${projectOverview || 'A comprehensive strategy tailored to help you achieve your vision.'}</div>
+      <!-- HEADER -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:48px;padding-bottom:24px;border-bottom:2px solid #111;">
+        <div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:10px;">Proposal For</div>
+          <h1 style="font-size:26px;font-weight:900;letter-spacing:-0.5px;margin:0 0 6px;color:#000;">${projectTitle || 'Untitled Proposal'}</h1>
+          <div style="font-size:14px;color:#555;">${clientName}${companyName ? ` · ${companyName}` : ''}</div>
         </div>
-
-        <div style="margin-bottom:40px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">2. Scope of Work</h2>
-          <div style="white-space:pre-line;">${scopeOfWork || 'Strategic execution of project requirements.'}</div>
-        </div>
-
-        <div style="margin-bottom:40px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">3. Deliverables</h2>
-          <div style="white-space:pre-line;padding:16px;background:#f9f9f9;border-radius:8px;font-size:13px;">${deliverables || 'As discussed.'}</div>
-        </div>
-
-        <div style="margin-bottom:40px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">4. Timeline</h2>
-          <div style="white-space:pre-line;">${timeline || 'TBD'}</div>
-        </div>
-
-        <div style="margin-bottom:40px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">5. Pricing</h2>
-          <div style="white-space:pre-line;">${pricing || 'TBD'}</div>
-        </div>
-
-        <div style="margin-bottom:40px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">6. Revision Policy</h2>
-          <div style="white-space:pre-line;">${revisionPolicy || 'Standard revisions apply.'}</div>
-        </div>
-
-        <div style="margin-bottom:40px;">
-          <h2 style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:16px;">7. Notes / Exclusions</h2>
-          <div style="white-space:pre-line;font-size:13px;color:#555;">${notes || 'Standard terms and conditions apply.'}</div>
-        </div>
-
-        <div style="border-top:1px solid #eee;padding-top:40px;margin-top:60px;text-align:center;">
-          <p style="font-size:15px;color:#333;margin-bottom:24px;">We look forward to moving forward upon your approval.</p>
-          <div style="font-size:14px;font-weight:700;">${provider.name}</div>
-          <div style="font-size:12px;color:#888;">${provider.email}</div>
+        <div style="text-align:right;">
+          <div style="font-size:18px;font-weight:800;color:#000;">${agencyName}</div>
+          ${preparedBy ? `<div style="font-size:12px;color:#888;margin-top:4px;">${preparedBy}</div>` : ''}
+          <div style="font-size:12px;color:#aaa;margin-top:6px;">${date}</div>
+          <div style="margin-top:10px;display:inline-block;padding:4px 12px;border-radius:4px;font-size:10px;font-weight:800;text-transform:uppercase;background:#f3f4f6;color:#374151;letter-spacing:0.5px;">${brandTone}</div>
         </div>
       </div>
-    `,
-    text: fullText
-  };
+
+      <!-- OVERVIEW -->
+      <div style="margin-bottom:40px;">
+        <h2 style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #eee;">Overview</h2>
+        <p style="font-size:14px;line-height:1.8;color:#222;">${projectOverview.replace(/\n/g, '<br>')}</p>
+      </div>
+
+      <!-- SERVICE BADGE ROW -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:40px;">
+        ${projectType ? `<span style="padding:5px 12px;border-radius:4px;background:#f3f4f6;font-size:11px;font-weight:700;color:#374151;">${projectType}</span>` : ''}
+        ${projectGoal ? `<span style="padding:5px 12px;border-radius:4px;background:#f3f4f6;font-size:11px;font-weight:700;color:#374151;">${projectGoal}</span>` : ''}
+        ${scopeLevel ? `<span style="padding:5px 12px;border-radius:4px;background:#111;font-size:11px;font-weight:700;color:#fff;">${scopeLevel} Scope</span>` : ''}
+      </div>
+
+      <!-- SCOPE -->
+      <div style="margin-bottom:40px;">
+        <h2 style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #eee;">Scope of Work</h2>
+        <div style="white-space:pre-line;color:#333;line-height:1.8;">${scopeOfWork}</div>
+      </div>
+
+      <!-- DELIVERABLES -->
+      <div style="margin-bottom:40px;">
+        <h2 style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #eee;">Deliverables</h2>
+        <div>
+          ${deliverables}
+        </div>
+      </div>
+
+      <!-- TIMELINE + REVISIONS -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:40px;">
+        <div style="background:#fafafa;border-radius:8px;padding:16px 20px;">
+          <div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:8px;">Timeline</div>
+          <div style="font-size:13px;color:#333;line-height:1.7;">${timeline}</div>
+        </div>
+        <div style="background:#fafafa;border-radius:8px;padding:16px 20px;">
+          <div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:8px;">Revisions</div>
+          <div style="font-size:13px;color:#333;line-height:1.7;">${revisionPolicy}</div>
+        </div>
+      </div>
+
+      <!-- INVESTMENT -->
+      <div style="margin-bottom:40px;">
+        <h2 style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #eee;">Investment</h2>
+        <div style="font-size:14px;color:#333;line-height:1.6;">${pricing}</div>
+      </div>
+
+      ${notes ? `
+      <!-- NOTES -->
+      <div style="margin-bottom:40px;">
+        <h2 style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #eee;">Notes & Exclusions</h2>
+        <div style="font-size:13px;color:#555;white-space:pre-line;line-height:1.8;">${notes}</div>
+      </div>
+      ` : ''}
+
+      <!-- CLOSING -->
+      <div style="border-top:2px solid #111;padding-top:32px;margin-top:48px;">
+        <div style="white-space:pre-line;font-size:14px;color:#333;line-height:1.8;">${(closingLine || `We look forward to working with you.\n\n— ${agencyName}`).replace(/\n/g, '<br>')}</div>
+      </div>
+
+    </div>
+  `;
+
+  return { html, text: fullText };
 }
 
 export function generateContract(data, provider) {

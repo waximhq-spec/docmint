@@ -43,35 +43,29 @@ export default function DocOutput({ type, html, text }) {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(text);
-    alert('Copied to clipboard');
   };
 
   return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--border)' }}>
-      <div style={{ 
-        padding: '12px 20px', 
-        background: '#fcfcfc', 
-        borderBottom: '1px solid var(--border)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: 1 }}>Preview Mode</div>
+    <div className="doc-output fade-enter">
+      <div className="doc-toolbar">
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Preview
+        </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost btn-sm" onClick={handleCopy}>Copy Text</button>
-          <button className="btn btn-primary btn-sm" onClick={handleExportPDF}>Export PDF</button>
+          <button className="btn btn-outline btn-sm" onClick={handleCopy}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+          <button className="btn btn-primary btn-sm" onClick={handleExportPDF}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export PDF
+          </button>
         </div>
       </div>
       
-      <div className="doc-preview" style={{ 
-        padding: '40px', 
-        background: '#fff', 
-        minHeight: '600px',
-        maxHeight: '800px',
-        overflowY: 'auto',
-        color: '#333',
-        fontSize: '14px',
-        lineHeight: '1.6'
+      <div className="doc-body" style={{ 
+        maxHeight: 'calc(100vh - 180px)',
+        overflowY: 'auto'
       }}>
         <div className="rendered-content">
           <ReactMarkdown>{text}</ReactMarkdown>
@@ -79,13 +73,13 @@ export default function DocOutput({ type, html, text }) {
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        .rendered-content h1 { font-size: 24px; font-weight: 800; margin-bottom: 24px; color: #000; }
-        .rendered-content h2 { font-size: 18px; font-weight: 700; margin-top: 32px; margin-bottom: 16px; color: #000; }
-        .rendered-content h3 { font-size: 15px; font-weight: 700; margin-top: 24px; margin-bottom: 12px; }
-        .rendered-content p { margin-bottom: 16px; }
+        .rendered-content h1 { font-size: 22px; font-weight: 600; margin-bottom: 20px; color: #000; letter-spacing: -0.01em; }
+        .rendered-content h2 { font-size: 16px; font-weight: 600; margin-top: 32px; margin-bottom: 12px; color: #000; }
+        .rendered-content h3 { font-size: 14px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; }
+        .rendered-content p { margin-bottom: 12px; color: #374151; line-height: 1.6; }
         .rendered-content ul { margin-bottom: 16px; padding-left: 20px; }
-        .rendered-content li { margin-bottom: 8px; }
-        .rendered-content strong { font-weight: 700; color: #000; }
+        .rendered-content li { margin-bottom: 6px; color: #374151; }
+        .rendered-content strong { font-weight: 600; color: #000; }
       `}} />
     </div>
   );

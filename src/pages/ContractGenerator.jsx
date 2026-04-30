@@ -24,28 +24,25 @@ const DEFAULT_FORM = {
   cancellationPolicy: '',
 };
 
-function AIButton({ label, loading, onClick }) {
+function AIButton({ label, loading, onClick, disabled }) {
   return (
     <button
       onClick={onClick}
-      disabled={loading}
+      disabled={loading || disabled}
+      className="btn btn-outline btn-sm"
       style={{
-        padding: '3px 10px',
-        fontSize: 10,
-        fontWeight: 700,
-        border: '1px solid #6366f1',
-        borderRadius: 20,
-        background: loading ? '#f0f0ff' : '#fff',
-        color: '#6366f1',
-        cursor: loading ? 'not-allowed' : 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4,
-        whiteSpace: 'nowrap',
-        opacity: loading ? 0.7 : 1,
+        padding: '2px 8px',
+        fontSize: '10px',
+        height: '24px',
+        minHeight: 'unset',
+        borderColor: 'var(--border)',
+        color: 'var(--text-secondary)',
+        fontWeight: 600,
+        textTransform: 'uppercase',
+        letterSpacing: '0.02em'
       }}
     >
-      {loading ? '⏳ Drafting...' : `✨ ${label}`}
+      {loading ? '...' : label}
     </button>
   );
 }
@@ -53,6 +50,7 @@ function AIButton({ label, loading, onClick }) {
 export default function ContractGenerator() {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [loadingAI, setLoadingAI] = useState(null);
+  const [mobileTab, setMobileTab] = useState('edit');
   const [provider, setProvider] = useState(() => {
     const saved = localStorage.getItem('docmint_provider');
     return saved ? JSON.parse(saved) : { name: '', email: '', address: '', currency: 'INR' };
@@ -87,93 +85,96 @@ export default function ContractGenerator() {
   };
 
   return (
-    <div className="page-body fade-enter">
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'start' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          <div className="card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-              <div className="card-title" style={{ margin: 0 }}>Agreement Context</div>
-              <span style={{ fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 20, background: '#f0f0ff', color: '#6366f1', border: '1px solid #e0e0ff' }}>✨ AI POWERED</span>
-            </div>
-            <p style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>
-              Agency: <strong>{provider.name || 'Not set'}</strong> · Currency: <strong>{provider.currency}</strong>
-            </p>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Client Legal Name</label>
-                <input value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="Recipient Name" />
-              </div>
-              <div className="form-group">
-                <label>Client Company</label>
-                <input value={form.companyName} onChange={e => set('companyName', e.target.value)} placeholder="Entity Name" />
-              </div>
-            </div>
-          </div>
+    <div className="fade-enter">
+      <div className="mobile-view-tabs">
+        <button className={`mobile-view-tab ${mobileTab === 'edit' ? 'active' : ''}`} onClick={() => setMobileTab('edit')}>Editor</button>
+        <button className={`mobile-view-tab ${mobileTab === 'preview' ? 'active' : ''}`} onClick={() => setMobileTab('preview')}>Preview</button>
+      </div>
 
+      <div className="page-body">
+        <div className="two-col-layout">
+          <div className="form-col" style={{ display: mobileTab === 'edit' ? 'flex' : 'none', flexDirection: 'column', gap: 20 }}>
+          
           <div className="card">
-            <div className="card-title">Document Content</div>
+            <div className="card-title">Agreement Context</div>
             <div className="form-grid">
+              <div className="form-group">
+                <label>Client Name</label>
+                <input value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="Recipient Legal Name" />
+              </div>
+              <div className="form-group">
+                <label>Company Entity</label>
+                <input value={form.companyName} onChange={e => set('companyName', e.target.value)} placeholder="Company Name" />
+              </div>
               <div className="form-group full">
                 <label>Contract Title</label>
-                <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Service Agreement" />
-              </div>
-
-              <div className="form-group full">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <label style={{ margin: 0 }}>1. Scope of Work</label>
-                  <AIButton label="Polish" loading={loadingAI === 'scopeOfWork'} onClick={() => handleAIPolish('scopeOfWork', form.scopeOfWork)} />
-                </div>
-                <textarea rows={4} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="Describe the services to be rendered..." />
-              </div>
-
-              <div className="form-group full">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <label style={{ margin: 0 }}>2. Timeline</label>
-                  <AIButton label="Polish" loading={loadingAI === 'timeline'} onClick={() => handleAIPolish('timeline', form.timeline)} />
-                </div>
-                <textarea rows={2} value={form.timeline} onChange={e => set('timeline', e.target.value)} placeholder="Timeframes and milestones..." />
-              </div>
-
-              <div className="form-group full">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <label style={{ margin: 0 }}>3. Payment Terms</label>
-                  <AIButton label="Polish" loading={loadingAI === 'paymentTerms'} onClick={() => handleAIPolish('paymentTerms', form.paymentTerms)} />
-                </div>
-                <textarea rows={3} value={form.paymentTerms} onChange={e => set('paymentTerms', e.target.value)} placeholder="Fees, payment schedule, and late fees..." />
-              </div>
-
-              <div className="form-group full">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <label style={{ margin: 0 }}>4. Intellectual Property</label>
-                  <AIButton label="Polish" loading={loadingAI === 'intellectualProperty'} onClick={() => handleAIPolish('intellectualProperty', form.intellectualProperty)} />
-                </div>
-                <textarea rows={3} value={form.intellectualProperty} onChange={e => set('intellectualProperty', e.target.value)} placeholder="Who owns what and when..." />
-              </div>
-
-              <div className="form-group full">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <label style={{ margin: 0 }}>5. Cancellation Policy</label>
-                  <AIButton label="Polish" loading={loadingAI === 'cancellationPolicy'} onClick={() => handleAIPolish('cancellationPolicy', form.cancellationPolicy)} />
-                </div>
-                <textarea rows={3} value={form.cancellationPolicy} onChange={e => set('cancellationPolicy', e.target.value)} placeholder="What happens if the project is cancelled..." />
+                <input value={form.projectTitle} onChange={e => set('projectTitle', e.target.value)} placeholder="e.g. Master Service Agreement" />
               </div>
             </div>
           </div>
 
-          <button className="btn btn-primary" onClick={() => setDoc(generateContract(form, provider))} style={{ width: '100%', height: 48 }}>
-            Refresh Preview
-          </button>
-        </div>
+          <div className="card">
+            <div className="card-title">Legal Provisions</div>
+            <div className="form-grid">
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <label>1. Scope of Work</label>
+                  <AIButton label="Polish" loading={loadingAI === 'scopeOfWork'} onClick={() => handleAIPolish('scopeOfWork', form.scopeOfWork)} />
+                </div>
+                <textarea rows={4} value={form.scopeOfWork} onChange={e => set('scopeOfWork', e.target.value)} placeholder="Services to be provided..." />
+              </div>
 
-        <div style={{ position: 'sticky', top: 24 }}>
-          <div className="card-title" style={{ marginBottom: 12 }}>Live Legal Preview ({provider.currency})</div>
-          {doc ? (
-            <DocOutput type="Contract" html={doc.html} text={doc.text} />
-          ) : (
-            <div className="card" style={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', borderStyle: 'dashed' }}>
-              Fill details to see preview
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <label>2. Timeline</label>
+                  <AIButton label="Polish" loading={loadingAI === 'timeline'} onClick={() => handleAIPolish('timeline', form.timeline)} />
+                </div>
+                <textarea rows={2} value={form.timeline} onChange={e => set('timeline', e.target.value)} placeholder="Delivery schedule..." />
+              </div>
+
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <label>3. Payment Terms</label>
+                  <AIButton label="Polish" loading={loadingAI === 'paymentTerms'} onClick={() => handleAIPolish('paymentTerms', form.paymentTerms)} />
+                </div>
+                <textarea rows={3} value={form.paymentTerms} onChange={e => set('paymentTerms', e.target.value)} placeholder="Fees and schedule..." />
+              </div>
+
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <label>4. Intellectual Property</label>
+                  <AIButton label="Polish" loading={loadingAI === 'intellectualProperty'} onClick={() => handleAIPolish('intellectualProperty', form.intellectualProperty)} />
+                </div>
+                <textarea rows={3} value={form.intellectualProperty} onChange={e => set('intellectualProperty', e.target.value)} placeholder="Rights and ownership..." />
+              </div>
+
+              <div className="form-group full">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <label>5. Cancellation</label>
+                  <AIButton label="Polish" loading={loadingAI === 'cancellationPolicy'} onClick={() => handleAIPolish('cancellationPolicy', form.cancellationPolicy)} />
+                </div>
+                <textarea rows={3} value={form.cancellationPolicy} onChange={e => set('cancellationPolicy', e.target.value)} placeholder="Termination conditions..." />
+              </div>
             </div>
-          )}
+          </div>
+
+          <button className="btn btn-primary" onClick={() => setDoc(generateContract(form, provider))} style={{ width: '100%', height: 44 }}>
+            Finalize Contract
+          </button>
+          </div>
+
+          <div className="preview-panel" style={{ display: mobileTab === 'preview' ? 'block' : 'none' }}>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ color: 'var(--text-tertiary)', marginBottom: 8, display: 'block' }}>Legal Document Preview</label>
+            </div>
+            {doc ? (
+              <DocOutput type="Contract" html={doc.html} text={doc.text} />
+            ) : (
+              <div className="card" style={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', borderStyle: 'dashed' }}>
+                Fill details to generate document
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

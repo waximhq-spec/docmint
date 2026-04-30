@@ -61,7 +61,6 @@ export default function InvoiceGenerator() {
   }, []);
 
   useEffect(() => {
-    // Pre-fill bank details from global settings if form fields are empty
     if (provider) {
       setForm(f => ({
         ...f,
@@ -75,7 +74,6 @@ export default function InvoiceGenerator() {
   }, [provider]);
 
   useEffect(() => {
-    // Regenerate preview when form/provider changes
     if (form.clientName) {
       setDoc(generateInvoice(form, provider));
     }
@@ -152,114 +150,93 @@ export default function InvoiceGenerator() {
 
   return (
     <div className="fade-enter">
-      {/* Mobile Edit / Preview Tabs */}
       <div className="mobile-view-tabs">
-        <button className={`mobile-view-tab ${mobileTab === 'edit' ? 'active' : ''}`} onClick={() => setMobileTab('edit')}>✏️ Edit</button>
-        <button className={`mobile-view-tab ${mobileTab === 'preview' ? 'active' : ''}`} onClick={() => setMobileTab('preview')}>👁 Preview</button>
+        <button className={`mobile-view-tab ${mobileTab === 'edit' ? 'active' : ''}`} onClick={() => setMobileTab('edit')}>Editor</button>
+        <button className={`mobile-view-tab ${mobileTab === 'preview' ? 'active' : ''}`} onClick={() => setMobileTab('preview')}>Preview</button>
       </div>
 
       <div className="page-body">
         <div className="two-col-layout">
-          {/* LEFT: Form inputs */}
-          <div style={{ display: mobileTab === 'edit' ? 'flex' : 'none', flexDirection: 'column', gap: 16 }} className="form-col">
+          <div className="form-col" style={{ display: mobileTab === 'edit' ? 'flex' : 'none', flexDirection: 'column', gap: 20 }}>
           
           <div className="card">
-            <div className="card-title">1. Global Identity & Currency</div>
+            <div className="card-title">Identity & Currency</div>
             <div className="form-grid">
               <div className="form-group">
                 <label>Billing Currency</label>
                 <select value={provider.currency} onChange={e => setProv('currency', e.target.value)}>
-                  <option value="INR">INR (₹) - India</option>
-                  <option value="BHD">BHD (.د.ب) - Bahrain</option>
+                  <option value="INR">INR (₹)</option>
+                  <option value="BHD">BHD (.د.ب)</option>
+                  <option value="USD">USD ($)</option>
                 </select>
               </div>
               <div className="form-group">
                 <label>Agency Name</label>
-                <input value={provider.name} onChange={e => setProv('name', e.target.value)} placeholder="e.g. Acme Studio" />
+                <input value={provider.name} onChange={e => setProv('name', e.target.value)} placeholder="Agency name" />
               </div>
-              <div className="form-group full">
-                <label>Smart Address Search</label>
+              <div className="form-group">
+                <label>Office Address</label>
                 <LocationInput 
                   value={provider.address} 
                   onChange={val => setProv('address', val)} 
-                  placeholder="Type to find your global office address..." 
+                  placeholder="Global office address..." 
                 />
               </div>
             </div>
           </div>
 
           <div className="card">
-            <div className="card-title">2. Client Details</div>
+            <div className="card-title">Client Details</div>
             <div className="form-grid">
               <div className="form-group">
                 <label>Client Name*</label>
-                <input value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="Recipient Name" />
+                <input value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="Recipient name" />
               </div>
               <div className="form-group">
-                <label>Email</label>
-                <input value={form.email} onChange={e => set('email', e.target.value)} placeholder="client@email.com" />
+                <label>Email Address</label>
+                <input value={form.email} onChange={e => set('email', e.target.value)} placeholder="client@agency.com" />
               </div>
             </div>
           </div>
 
           <div className="card">
-            <div className="card-title">3. Project & Financials</div>
+            <div className="card-title">Line Items & Financials</div>
             <div className="form-grid">
-
-              <div className="form-group full">
-                <label>Project Title / Brief*</label>
-                <input 
-                  value={form.projectName} 
-                  onChange={e => set('projectName', e.target.value)} 
-                  placeholder="e.g. Video Production for Acme Corp" 
-                />
+              <div className="form-group">
+                <label>Project Title*</label>
+                <input value={form.projectName} onChange={e => set('projectName', e.target.value)} placeholder="e.g. Brand Identity Design" />
               </div>
 
-              <div className="form-group full">
-                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>Services & Items*</span>
-                  <button className="btn btn-ghost btn-sm" onClick={addLineItem} style={{ color: 'var(--primary)' }}>+ Add Item</button>
-                </label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
-                  {form.lineItems.map((item, idx) => (
-                    <div key={item.id} className="card" style={{ padding: 12, background: '#fcfcfc', border: '1px solid #eee' }}>
-                      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              <div className="form-group">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <label>Services</label>
+                  <button className="btn btn-outline btn-sm" onClick={addLineItem}>+ Add Item</button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {form.lineItems.map((item) => (
+                    <div key={item.id} style={{ padding: 16, border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>
+                      <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
                         <div style={{ flex: 1 }}>
                           <input 
                             value={item.description} 
                             onChange={e => updateLineItem(item.id, 'description', e.target.value)} 
-                            placeholder="Service Name (e.g. Editing)"
-                            style={{ background: '#fff' }}
+                            placeholder="Description"
                           />
                         </div>
-                        <button className="btn btn-ghost btn-sm" onClick={() => removeLineItem(item.id)} style={{ color: '#ef4444' }}>✕</button>
+                        <button className="btn btn-ghost btn-sm" onClick={() => removeLineItem(item.id)} style={{ color: 'var(--text-secondary)' }}>✕</button>
                       </div>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <div style={{ width: 80 }}>
-                          <label style={{ fontSize: 9, marginBottom: 2 }}>Qty</label>
-                          <input 
-                            type="number" 
-                            value={item.quantity} 
-                            onChange={e => updateLineItem(item.id, 'quantity', e.target.value)} 
-                            placeholder="1"
-                            style={{ background: '#fff' }}
-                          />
+                      <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 100px', gap: 12, alignItems: 'center' }}>
+                        <div>
+                          <label style={{ fontSize: 10 }}>Qty</label>
+                          <input type="number" value={item.quantity} onChange={e => updateLineItem(item.id, 'quantity', e.target.value)} />
                         </div>
-                        <div style={{ flex: 1 }}>
-                          <label style={{ fontSize: 9, marginBottom: 2 }}>Rate ({provider.currency})</label>
-                          <input 
-                            type="number" 
-                            value={item.rate} 
-                            onChange={e => updateLineItem(item.id, 'rate', e.target.value)} 
-                            placeholder="0.00"
-                            style={{ background: '#fff' }}
-                          />
+                        <div>
+                          <label style={{ fontSize: 10 }}>Rate ({provider.currency})</label>
+                          <input type="number" value={item.rate} onChange={e => updateLineItem(item.id, 'rate', e.target.value)} />
                         </div>
-                        <div style={{ width: 100, textAlign: 'right' }}>
-                          <label style={{ fontSize: 9, marginBottom: 2 }}>Total</label>
-                          <div style={{ fontSize: 13, fontWeight: 700, marginTop: 8 }}>
-                            {formatCurrency((parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0), provider.currency)}
-                          </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <label style={{ fontSize: 10 }}>Total</label>
+                          <div style={{ fontWeight: 600 }}>{formatCurrency((parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0), provider.currency)}</div>
                         </div>
                       </div>
                     </div>
@@ -277,41 +254,29 @@ export default function InvoiceGenerator() {
               </div>
               
               {form.type !== 'Full Invoice' && (
-                <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: 12 }}>
                   <div className="form-group">
-                    <label>{form.type === 'Final Invoice' ? 'Advance Paid %' : 'Advance %'}</label>
-                    <input type="number" value={form.advancePercent} onChange={e => { set('advancePercent', e.target.value); set('manualAdvance', ''); }} placeholder="50" />
+                    <label>{form.type === 'Final Invoice' ? 'Advance %' : 'Advance %'}</label>
+                    <input type="number" value={form.advancePercent} onChange={e => { set('advancePercent', e.target.value); set('manualAdvance', ''); }} />
                   </div>
                   <div className="form-group">
-                    <label>{form.type === 'Final Invoice' ? 'Manual Advance Paid' : 'OR Manual Advance Amount'}</label>
+                    <label>Manual Amount</label>
                     <input type="number" value={form.manualAdvance} onChange={e => set('manualAdvance', e.target.value)} placeholder="0.00" />
                   </div>
-                </>
+                </div>
               )}
 
-              <div className="form-group" style={{ opacity: 0.7 }}>
-                <label>Payment Status</label>
-                <select 
-                  value={form.status} 
-                  onChange={e => set('status', e.target.value)}
-                  disabled
-                >
-                  <option>Unpaid</option>
-                  <option>Partially Paid</option>
-                </select>
-                <div style={{ fontSize: 9, color: '#888', marginTop: 4 }}>Status is set automatically based on invoice type</div>
+              <div className="toggle-row">
+                <div className="toggle-info">
+                  <div className="toggle-label">Enable Tax / GST</div>
+                </div>
+                <Toggle checked={form.gstEnabled} onChange={v => set('gstEnabled', v)} />
               </div>
-            <div className="toggle-row" style={{ marginTop: 16 }}>
-              <div className="toggle-info">
-                <div className="toggle-label">Include Tax/GST</div>
-              </div>
-              <Toggle checked={form.gstEnabled} onChange={v => set('gstEnabled', v)} />
             </div>
           </div>
-        </div>
 
           <div className="card">
-            <div className="card-title">4. Payment Details (Bank / UPI)</div>
+            <div className="card-title">Payment Settlement</div>
             <div className="form-grid">
               <div className="form-group">
                 <label>Bank Name*</label>
@@ -319,22 +284,19 @@ export default function InvoiceGenerator() {
               </div>
               <div className="form-group">
                 <label>Account Holder*</label>
-                <input value={form.holderName} onChange={e => set('holderName', e.target.value)} placeholder="Name on account" />
+                <input value={form.holderName} onChange={e => set('holderName', e.target.value)} placeholder="Beneficiary name" />
               </div>
               <div className="form-group">
                 <label>Account Number*</label>
-                <input value={form.accNumber} onChange={e => set('accNumber', e.target.value)} placeholder="0000 0000 0000" />
+                <input value={form.accNumber} onChange={e => set('accNumber', e.target.value)} placeholder="000000000000" />
               </div>
               <div className="form-group">
-                <label>IFSC Code*</label>
-                <input value={form.ifscCode} onChange={e => set('ifscCode', e.target.value)} placeholder="HDFC0001234" />
+                <label>IFSC / Swift Code*</label>
+                <input value={form.ifscCode} onChange={e => set('ifscCode', e.target.value)} placeholder="IFSC/SWIFT" />
               </div>
-              <div className="form-group full">
-                <label>UPI ID (For QR Generation)</label>
+              <div className="form-group">
+                <label>UPI ID</label>
                 <input value={form.upiId} onChange={e => set('upiId', e.target.value)} placeholder="username@upi" />
-                {form.upiId && provider.currency === 'INR' && (
-                  <div style={{ fontSize: 10, color: '#10b981', marginTop: 4 }}>✨ UPI QR code will be generated automatically</div>
-                )}
               </div>
             </div>
           </div>
@@ -343,59 +305,43 @@ export default function InvoiceGenerator() {
             className="btn btn-primary" 
             onClick={handleGenerate} 
             disabled={!isValid()}
-            style={{ 
-              width: '100%', 
-              height: 48, 
-              fontSize: 16,
-              opacity: isValid() ? 1 : 0.5,
-              cursor: isValid() ? 'pointer' : 'not-allowed'
-            }}
+            style={{ width: '100%', height: 44 }}
           >
-            {isValid() ? 'Generate Invoice' : 'Fill Required Fields (*)'}
+            {isValid() ? 'Generate Document' : 'Complete Required Fields'}
           </button>
           </div>
 
-          {/* RIGHT: Preview panel */}
           <div className="preview-panel" style={{ display: mobileTab === 'preview' ? 'block' : 'none' }}>
-          <div className="card-title" style={{ marginBottom: 12 }}>Live Summary ({provider.currency})</div>
-          <div className="card" style={{ background: '#f9f9f9', marginBottom: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14 }}>
-              <span>Total Project Amount</span>
-              <span>{formatCurrency(totals.grandTotal, provider.currency)}</span>
-            </div>
-            {form.type !== 'Full Invoice' && (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14, color: 'var(--text-secondary)' }}>
-                  <span>{form.type === 'Advance Invoice' ? 'Advance Required' : 'Advance Paid'}</span>
-                  <span>{formatCurrency(totals.advance, provider.currency)}</span>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ color: 'var(--text-tertiary)', marginBottom: 8, display: 'block' }}>Settlement Summary</label>
+              <div className="card" style={{ background: 'var(--bg-secondary)', border: 'none' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Project Total</span>
+                  <span style={{ fontWeight: 500 }}>{formatCurrency(totals.grandTotal, provider.currency)}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14, color: 'var(--text-secondary)' }}>
-                  <span>Remaining Balance</span>
-                  <span>{formatCurrency(totals.remaining, provider.currency)}</span>
+                {form.type !== 'Full Invoice' && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, fontSize: 13 }}>
+                    <span style={{ color: 'var(--text-tertiary)' }}>Balance Outstanding</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>{formatCurrency(totals.remaining, provider.currency)}</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: 16, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+                  <span>{form.type === 'Advance Invoice' ? 'Advance Due' : form.type === 'Final Invoice' ? 'Final Balance' : 'Amount Due'}</span>
+                  <span>{formatCurrency(totals.dueNow, provider.currency)}</span>
                 </div>
-              </>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 18, borderTop: '1px solid #ddd', paddingTop: 12, marginTop: 12, color: form.status === 'Paid' ? '#10b981' : '#ef4444' }}>
-              <span>{form.type === 'Advance Invoice' ? 'Advance Due' : form.type === 'Final Invoice' ? 'Final Due' : 'Total Due'}</span>
-              <span>{formatCurrency(totals.dueNow, provider.currency)}</span>
+              </div>
             </div>
-            {form.type === 'Advance Invoice' && (
-              <div style={{ fontSize: 10, color: 'var(--text-secondary)', textAlign: 'right', marginTop: 8, fontStyle: 'italic' }}>
-                This is the {form.advancePercent}% advance to start work. The remaining {formatCurrency(totals.remaining, provider.currency)} is due later.
+
+            {doc ? (
+              <DocOutput type="Invoice" html={doc.html} text={doc.text} />
+            ) : (
+              <div className="card" style={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', borderStyle: 'dashed' }}>
+                Generate to see document preview
               </div>
             )}
           </div>
-
-          {doc ? (
-            <DocOutput type="Invoice" html={doc.html} text={doc.text} />
-          ) : (
-            <div className="card" style={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', borderStyle: 'dashed' }}>
-              Preview will appear here
-            </div>
-          )}
-          </div>
-        </div>{/* end two-col-layout */}
-      </div>{/* end page-body */}
+        </div>
+      </div>
     </div>
   );
 }
