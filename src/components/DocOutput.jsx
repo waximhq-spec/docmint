@@ -32,8 +32,8 @@ export default function DocOutput({ type, html, text }) {
   };
 
   return (
-    <div className="doc-output fade-enter" style={{ background: '#fff', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden' }}>
-      <div className="doc-toolbar" style={{ padding: '12px 16px', background: '#fafafa', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="doc-output fade-enter" style={{ background: 'var(--bg)', borderRadius: '16px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+      <div className="doc-toolbar" style={{ padding: '12px 16px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Document Preview
         </div>
@@ -50,16 +50,17 @@ export default function DocOutput({ type, html, text }) {
       <div className="doc-body" style={{ 
         maxHeight: 'calc(100vh - 200px)',
         overflowY: 'auto',
-        background: '#f3f4f6',
+        background: 'var(--bg-tertiary)',
         padding: '24px'
       }}>
-        {/* Paper Container */}
+        {/* Paper Container - Always White for correct PDF representation */}
         <div style={{ 
           background: '#fff', 
+          color: '#1a1a1a',
           margin: '0 auto', 
           maxWidth: '800px', 
           padding: '40px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
           borderRadius: '4px',
           minHeight: '600px'
         }}>
