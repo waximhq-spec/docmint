@@ -2,6 +2,49 @@ import { useState, useEffect, useCallback } from 'react';
 import DocOutput from '../components/DocOutput';
 import { generateProposal } from '../utils/generators';
 
+// ─── ICONS (SVG) ───────────────────────────────────────────
+
+const Icons = {
+  Video: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11" />
+      <rect x="2" y="6" width="14" height="12" rx="2" />
+    </svg>
+  ),
+  Social: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  ),
+  Web: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="2" x2="22" y1="12" y2="12" />
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+  ),
+  Design: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+    </svg>
+  ),
+  Marketing: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17" />
+      <path d="m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.8-2.8l-4.4 4.6c-.8.7-1.2 1.7-1.2 2.8v4" />
+      <path d="m19 13 2 2" />
+    </svg>
+  ),
+  Chevron: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  )
+};
+
 // ─── DATA MAPS ──────────────────────────────────────────────
 
 const PROJECT_TYPES = [
@@ -27,14 +70,24 @@ const PROJECT_GOALS = {
 const SCOPE_LEVELS = ['Starter', 'Standard', 'Advanced', 'Custom'];
 
 const DELIVERABLE_TYPES = [
-  { name: 'Videos', icon: '🎥' },
-  { name: 'Reels', icon: '📱' },
-  { name: 'Posts', icon: '🖼️' },
-  { name: 'Website', icon: '🌐' },
-  { name: 'Branding Kit', icon: '🎨' },
-  { name: 'Ads Setup', icon: '🚀' },
-  { name: 'Custom Item', icon: '📦' }
+  { name: 'Videos', icon: <Icons.Video /> },
+  { name: 'Reels', icon: <Icons.Social /> },
+  { name: 'Posts', icon: <Icons.Social /> },
+  { name: 'Website', icon: <Icons.Web /> },
+  { name: 'Branding Kit', icon: <Icons.Design /> },
+  { name: 'Ads Setup', icon: <Icons.Marketing /> },
+  { name: 'Custom Item', icon: <Icons.Chevron /> }
 ];
+
+const RECOMMENDED_DELIVERABLES = {
+  'Video Production': 'Videos',
+  'Social Media Content': 'Reels',
+  'Branding': 'Branding Kit',
+  'Website / Web Design': 'Website',
+  'Marketing / Ads': 'Ads Setup',
+  'Retainer': 'Custom Item',
+  'Custom Project': 'Custom Item'
+};
 
 const SCOPE_DESCRIPTIONS = {
   'Video Production': {
@@ -82,27 +135,6 @@ const SCOPE_DESCRIPTIONS = {
 };
 
 
-const QUICK_TEMPLATES = {
-  'Social Media Package': {
-    projectTypes: ['Social Media Content'], projectGoals: ['Content Batch'], scopeLevel: 'Standard',
-    deliverablesList: [{ id: 1, type: 'Reels', quantity: 8 }, { id: 2, type: 'Posts', quantity: 12 }],
-    duration: '1', durationUnit: 'months', revisions: '2',
-    totalPrice: '40000', advancePercent: '50', brandTone: 'Friendly',
-  },
-  'Ad Campaign': {
-    projectTypes: ['Marketing / Ads'], projectGoals: ['Lead Generation'], scopeLevel: 'Advanced',
-    deliverablesList: [{ id: 1, type: 'Videos', quantity: 3 }, { id: 2, type: 'Ads Setup', quantity: 1 }],
-    duration: '3', durationUnit: 'weeks', revisions: '3',
-    totalPrice: '75000', advancePercent: '50', brandTone: 'Premium Agency',
-  },
-  'Website Build': {
-    projectTypes: ['Website / Web Design'], projectGoals: ['Business Website'], scopeLevel: 'Standard',
-    deliverablesList: [{ id: 1, type: 'Website', quantity: 1 }],
-    duration: '4', durationUnit: 'weeks', revisions: '2',
-    totalPrice: '120000', advancePercent: '50', brandTone: 'Professional',
-  },
-};
-
 const TONE_CLOSINGS = {
   'Professional': (brand) => `We look forward to delivering exceptional results for your project.\n\n— ${brand}`,
   'Premium Agency': (brand) => `Thank you for considering ${brand}. We are committed to crafting work that exceeds expectations.\n\n— ${brand}`,
@@ -113,7 +145,7 @@ const TONE_CLOSINGS = {
 const TONE_OPENERS = {
   'Professional': (brand, client) => `${brand} is pleased to present this proposal to ${client || 'your team'}.`,
   'Premium Agency': (brand, client) => `Thank you for choosing ${brand}. We have crafted this proposal specifically for ${client || 'your vision'}.`,
-  'Friendly': (brand, client) => `Hey ${client || 'there'}! We're excited about this project and put together everything you need right here.`,
+  'Friendly': (brand, client) => `Hey ${client || 'there'}! We're really excited about this project and put together everything you need to know right here.`,
   'Corporate': (brand, client) => `${brand} hereby presents the following proposal in response to the requirements outlined by ${client || 'your organization'}.`,
 };
 
@@ -137,9 +169,7 @@ function Step({ number, title, active, onClick, children }) {
           <div className="step-number">{number}</div>
           {title}
         </div>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: active ? 'rotate(180deg)' : 'none', transition: '0.3s' }}>
-          <polyline points="6 9 12 15 18 9"></polyline>
-        </svg>
+        <Icons.Chevron />
       </div>
       <div className="step-content">
         {children}
@@ -182,15 +212,12 @@ function buildProposalData(form) {
   const advance = (total * advPct) / 100;
   const balance = total - advance;
 
-  const durationText = `${form.duration} ${form.durationUnit}`;
   const types = form.projectTypes;
   const goals = form.projectGoals;
 
-  // Overview
   const opener = TONE_OPENERS[form.brandTone] || TONE_OPENERS['Professional'];
   const projectOverview = opener(form.brandName || 'Our Agency', form.clientName);
 
-  // Grouped Deliverables
   const categories = {};
   form.deliverablesList.forEach(d => {
     if (!categories[d.type]) categories[d.type] = 0;
@@ -199,10 +226,8 @@ function buildProposalData(form) {
 
   let delivHtml = '<div style="display:grid;gap:12px;">';
   Object.entries(categories).forEach(([type, qty]) => {
-    const icon = DELIVERABLE_TYPES.find(t => t.name === type)?.icon || '📦';
     delivHtml += `
       <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f9f9f9;border-radius:8px;border:1px solid #eee;">
-        <span style="font-size:20px;">${icon}</span>
         <div>
           <div style="font-weight:700;font-size:14px;color:#111;">${qty} ${qty === 1 ? type.replace(/s$/, '') : type}</div>
           <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Deliverable Item</div>
@@ -212,12 +237,10 @@ function buildProposalData(form) {
   });
   delivHtml += '</div>';
 
-  // Scope
   const scopeDescs = types.map(t => (SCOPE_DESCRIPTIONS[t] && SCOPE_DESCRIPTIONS[t][form.scopeLevel]) || 'Custom project scope.');
   const uniqueScopeDescs = Array.from(new Set(scopeDescs));
   const scopeText = uniqueScopeDescs.join(' ');
 
-  // Pricing
   const fmt = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 0 }).format(n);
   const pricingHtml = `
     <div style="display:grid;gap:8px;max-width:300px;">
@@ -245,7 +268,7 @@ function buildProposalData(form) {
     brandTone: form.brandTone,
     projectOverview,
     scopeOfWork: scopeText,
-    deliverables: delivHtml, // passing HTML here to generators
+    deliverables: delivHtml,
     timeline: `${form.duration} ${form.durationUnit} from project kickoff`,
     revisionPolicy: `Includes ${form.revisions === 'Unlimited' ? 'unlimited' : form.revisions} rounds of revisions.`,
     pricing: pricingHtml,
@@ -257,16 +280,6 @@ function buildProposalData(form) {
   };
 }
 
-const RECOMMENDED_DELIVERABLES = {
-  'Video Production': 'Videos',
-  'Social Media Content': 'Reels',
-  'Branding': 'Branding Kit',
-  'Website / Web Design': 'Website',
-  'Marketing / Ads': 'Ads Setup',
-  'Retainer': 'Custom Item',
-  'Custom Project': 'Custom Item'
-};
-
 // ─── MAIN COMPONENT ──────────────────────────────────────────
 
 export default function ProposalGenerator() {
@@ -274,9 +287,6 @@ export default function ProposalGenerator() {
   const [activeStep, setActiveStep] = useState(1);
   const [mobileTab, setMobileTab] = useState('edit');
   const [doc, setDoc] = useState(null);
-  const [savedPresets, setSavedPresets] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('docmint_proposal_presets') || '[]'); } catch { return []; }
-  });
   const [provider] = useState(() => {
     try { return JSON.parse(localStorage.getItem('docmint_provider') || '{}'); } catch { return {}; }
   });
@@ -293,10 +303,7 @@ export default function ProposalGenerator() {
   const addDeliverable = () => {
     const firstType = form.projectTypes[0] || 'Video Production';
     const defaultType = RECOMMENDED_DELIVERABLES[firstType] || 'Videos';
-    setForm(f => ({ 
-      ...f, 
-      deliverablesList: [...f.deliverablesList, { id: Date.now(), type: defaultType, quantity: 1 }] 
-    }));
+    setForm(f => ({ ...f, deliverablesList: [...f.deliverablesList, { id: Date.now(), type: defaultType, quantity: 1 }] }));
   };
 
   const updateDeliverable = (id, field, value) => {
@@ -328,7 +335,6 @@ export default function ProposalGenerator() {
           <div className="form-col" style={{ display: mobileTab === 'edit' ? 'flex' : 'none', flexDirection: 'column', gap: 20 }}>
             
             <div className="step-accordion">
-              {/* Step 1 */}
               <Step number="1" title="Client & Identity" active={activeStep === 1} onClick={() => setActiveStep(1)}>
                 <div className="form-grid" style={{ marginBottom: 20 }}>
                   <div className="form-group">
@@ -356,7 +362,6 @@ export default function ProposalGenerator() {
                 </div>
               </Step>
 
-              {/* Step 2 */}
               <Step number="2" title="Project Setup" active={activeStep === 2} onClick={() => setActiveStep(2)}>
                 <div className="form-group" style={{ marginBottom: 20 }}>
                   <label>Project Type</label>
@@ -372,15 +377,14 @@ export default function ProposalGenerator() {
                 </div>
               </Step>
 
-              {/* Step 3 */}
               <Step number="3" title="Deliverables" active={activeStep === 3} onClick={() => setActiveStep(3)}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {form.deliverablesList.map((deliv) => {
-                    const icon = DELIVERABLE_TYPES.find(t => t.name === deliv.type)?.icon || '📦';
+                    const icon = DELIVERABLE_TYPES.find(t => t.name === deliv.type)?.icon || <Icons.Chevron />;
                     return (
                       <div key={deliv.id} className="deliverable-card">
-                        <div className="deliv-icon">{icon}</div>
-                        <div className="deliv-info" style={{ position: 'relative' }}>
+                        <div className="deliv-icon" style={{ color: 'var(--accent)' }}>{icon}</div>
+                        <div className="deliv-info">
                           <select 
                             value={deliv.type} 
                             onChange={(e) => updateDeliverable(deliv.id, 'type', e.target.value)} 
@@ -402,9 +406,9 @@ export default function ProposalGenerator() {
                         </div>
                         <div className="deliv-controls">
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f5f5f5', borderRadius: 6, padding: '2px 8px' }}>
-                            <button onClick={() => updateDeliverable(deliv.id, 'quantity', Math.max(1, deliv.quantity - 1))} style={{ border: 'none', background: 'none', cursor: 'pointer' }}>-</button>
+                            <button onClick={() => updateDeliverable(deliv.id, 'quantity', Math.max(1, deliv.quantity - 1))} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 8px' }}>-</button>
                             <span style={{ fontSize: 13, fontWeight: 700, minWidth: 20, textAlign: 'center' }}>{deliv.quantity}</span>
-                            <button onClick={() => updateDeliverable(deliv.id, 'quantity', deliv.quantity + 1)} style={{ border: 'none', background: 'none', cursor: 'pointer' }}>+</button>
+                            <button onClick={() => updateDeliverable(deliv.id, 'quantity', deliv.quantity + 1)} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 8px' }}>+</button>
                           </div>
                           <div className="deliv-remove" onClick={() => removeDeliverable(deliv.id)}>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -417,7 +421,6 @@ export default function ProposalGenerator() {
                 </div>
               </Step>
 
-              {/* Step 4 */}
               <Step number="4" title="Timeline & Revisions" active={activeStep === 4} onClick={() => setActiveStep(4)}>
                 <div className="form-group" style={{ marginBottom: 20 }}>
                   <label>Duration</label>
@@ -434,7 +437,6 @@ export default function ProposalGenerator() {
                 </div>
               </Step>
 
-              {/* Step 5 */}
               <Step number="5" title="Investment" active={activeStep === 5} onClick={() => setActiveStep(5)}>
                 <div className="form-grid">
                   <div className="form-group">
@@ -448,7 +450,6 @@ export default function ProposalGenerator() {
                 </div>
               </Step>
 
-              {/* Step 6 */}
               <Step number="6" title="Additional Notes" active={activeStep === 6} onClick={() => setActiveStep(6)}>
                 <div className="form-group">
                   <label>Exclusions & Terms</label>
@@ -469,7 +470,6 @@ export default function ProposalGenerator() {
               </div>
             )}
 
-            {/* Smart Live Summary */}
             <div className="card" style={{ marginTop: 24, borderRadius: 16 }}>
               <div className="card-title">Live Summary</div>
               <div className="summary-grid">
