@@ -21,7 +21,7 @@ const DEFAULT_FORM = {
   companyName: '',
   email: '',
   projectName: '', // Still used as a general project title
-  lineItems: [{ id: 1, description: '', quantity: 1, rate: '' }],
+  lineItems: [{ id: 1, title: '', description: '', quantity: 1, rate: '' }],
   totalAmount: 0,
   advancePercent: '50',
   manualAdvance: '',
@@ -32,7 +32,6 @@ const DEFAULT_FORM = {
   status: 'Unpaid',
   gstEnabled: false,
   gstRate: 18,
-  notes: 'Payment due within 7 days.\nLate payments incur a 5% fee after the due date.',
   // Payment Details
   bankName: '',
   accNumber: '',
@@ -125,11 +124,12 @@ export default function InvoiceGenerator() {
                     form.accNumber.trim().length > 0 && 
                     form.ifscCode.trim().length > 0 && 
                     form.holderName.trim().length > 0;
-    return hasItems && hasClient && hasBank;
+    const hasUPI = form.upiId.trim().length > 0;
+    return hasItems && hasClient && (hasBank || hasUPI);
   };
 
   const addLineItem = () => {
-    set('lineItems', [...form.lineItems, { id: Date.now(), description: '', quantity: 1, rate: '' }]);
+    set('lineItems', [...form.lineItems, { id: Date.now(), title: '', description: '', quantity: 1, rate: '' }]);
   };
 
   const removeLineItem = (id) => {
@@ -218,12 +218,20 @@ export default function InvoiceGenerator() {
                       <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
                         <div style={{ flex: 1 }}>
                           <input 
+                            value={item.title} 
+                            onChange={e => updateLineItem(item.id, 'title', e.target.value)} 
+                            placeholder="Item Title (e.g. Video Edits)"
+                            style={{ fontWeight: 600, marginBottom: 8 }}
+                          />
+                          <textarea 
                             value={item.description} 
                             onChange={e => updateLineItem(item.id, 'description', e.target.value)} 
-                            placeholder="Description"
+                            placeholder="Detailed description of the service..."
+                            rows={2}
+                            style={{ fontSize: 12, padding: '8px 12px' }}
                           />
                         </div>
-                        <button className="btn btn-ghost btn-sm" onClick={() => removeLineItem(item.id)} style={{ color: 'var(--text-secondary)' }}>✕</button>
+                        <button className="btn btn-ghost btn-sm" onClick={() => removeLineItem(item.id)} style={{ color: 'var(--text-secondary)', alignSelf: 'flex-start' }}>✕</button>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 100px', gap: 12, alignItems: 'center' }}>
                         <div>
@@ -278,24 +286,28 @@ export default function InvoiceGenerator() {
           <div className="card">
             <div className="card-title">Payment Settlement</div>
             <div className="form-grid">
-              <div className="form-group">
-                <label>Bank Name*</label>
-                <input value={form.bankName} onChange={e => set('bankName', e.target.value)} placeholder="e.g. HDFC Bank" />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="form-group">
+                  <label>Bank Name</label>
+                  <input value={form.bankName} onChange={e => set('bankName', e.target.value)} placeholder="e.g. HDFC Bank" />
+                </div>
+                <div className="form-group">
+                  <label>Account Holder</label>
+                  <input value={form.holderName} onChange={e => set('holderName', e.target.value)} placeholder="Beneficiary name" />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="form-group">
+                  <label>Account Number</label>
+                  <input value={form.accNumber} onChange={e => set('accNumber', e.target.value)} placeholder="000000000000" />
+                </div>
+                <div className="form-group">
+                  <label>IFSC / Swift Code</label>
+                  <input value={form.ifscCode} onChange={e => set('ifscCode', e.target.value)} placeholder="IFSC/SWIFT" />
+                </div>
               </div>
               <div className="form-group">
-                <label>Account Holder*</label>
-                <input value={form.holderName} onChange={e => set('holderName', e.target.value)} placeholder="Beneficiary name" />
-              </div>
-              <div className="form-group">
-                <label>Account Number*</label>
-                <input value={form.accNumber} onChange={e => set('accNumber', e.target.value)} placeholder="000000000000" />
-              </div>
-              <div className="form-group">
-                <label>IFSC / Swift Code*</label>
-                <input value={form.ifscCode} onChange={e => set('ifscCode', e.target.value)} placeholder="IFSC/SWIFT" />
-              </div>
-              <div className="form-group">
-                <label>UPI ID</label>
+                <label>UPI ID (Alternative)</label>
                 <input value={form.upiId} onChange={e => set('upiId', e.target.value)} placeholder="username@upi" />
               </div>
             </div>

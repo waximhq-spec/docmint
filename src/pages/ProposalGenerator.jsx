@@ -153,10 +153,9 @@ const DEFAULT_FORM = {
   brandName: '', preparedBy: '', brandTone: 'Professional',
   clientName: '', companyName: '', projectTitle: '',
   projectTypes: ['Video Production'], projectGoals: ['Advertisement'], scopeLevel: 'Standard',
-  deliverablesList: [{ id: Date.now(), type: 'Videos', quantity: 1 }],
+  deliverablesList: [{ id: Date.now(), type: 'Videos', quantity: 1, description: '' }],
   duration: '2', durationUnit: 'weeks', revisions: '2',
   totalPrice: '', advancePercent: '50',
-  notes: '',
 };
 
 // ─── COMPONENTS ──────────────────────────────────────────────
@@ -218,22 +217,20 @@ function buildProposalData(form) {
   const opener = TONE_OPENERS[form.brandTone] || TONE_OPENERS['Professional'];
   const projectOverview = opener(form.brandName || 'Our Agency', form.clientName);
 
-  const categories = {};
-  form.deliverablesList.forEach(d => {
-    if (!categories[d.type]) categories[d.type] = 0;
-    categories[d.type] += d.quantity;
-  });
-
   let delivHtml = '<div style="display:grid;gap:12px;">';
-  Object.entries(categories).forEach(([type, qty]) => {
+  let delivText = '';
+  form.deliverablesList.forEach(d => {
+    const label = `${d.quantity} ${d.quantity === 1 ? d.type.replace(/s$/, '') : d.type}`;
     delivHtml += `
-      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f9f9f9;border-radius:8px;border:1px solid #eee;">
-        <div>
-          <div style="font-weight:700;font-size:14px;color:#111;">${qty} ${qty === 1 ? type.replace(/s$/, '') : type}</div>
-          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Deliverable Item</div>
+      <div style="padding:12px 16px;background:#f9f9f9;border-radius:8px;border:1px solid #eee;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <div style="font-weight:700;font-size:14px;color:#111;">${label}</div>
+          <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Deliverable</div>
         </div>
+        ${d.description ? `<div style="font-size:12px;color:#555;line-height:1.5;margin-top:4px;border-top:1px solid #f0f0f0;padding-top:4px;">${d.description}</div>` : ''}
       </div>
     `;
+    delivText += `- **${label}**\n  ${d.description || ''}\n\n`;
   });
   delivHtml += '</div>';
 
@@ -269,6 +266,7 @@ function buildProposalData(form) {
     projectOverview,
     scopeOfWork: scopeText,
     deliverables: delivHtml,
+    deliverablesText: delivText,
     timeline: `${form.duration} ${form.durationUnit} from project kickoff`,
     revisionPolicy: `Includes ${form.revisions === 'Unlimited' ? 'unlimited' : form.revisions} rounds of revisions.`,
     pricing: pricingHtml,
@@ -301,9 +299,7 @@ export default function ProposalGenerator() {
   };
 
   const addDeliverable = () => {
-    const firstType = form.projectTypes[0] || 'Video Production';
-    const defaultType = RECOMMENDED_DELIVERABLES[firstType] || 'Videos';
-    setForm(f => ({ ...f, deliverablesList: [...f.deliverablesList, { id: Date.now(), type: defaultType, quantity: 1 }] }));
+    set('deliverablesList', [...form.deliverablesList, { id: Date.now(), type: 'Videos', quantity: 1, description: '' }]);
   };
 
   const updateDeliverable = (id, field, value) => {
@@ -384,7 +380,7 @@ export default function ProposalGenerator() {
                     return (
                       <div key={deliv.id} className="deliverable-card">
                         <div className="deliv-icon" style={{ color: 'var(--accent)' }}>{icon}</div>
-                        <div className="deliv-info">
+                        <div className="deliv-info" style={{ flex: 1 }}>
                           <select 
                             value={deliv.type} 
                             onChange={(e) => updateDeliverable(deliv.id, 'type', e.target.value)} 
@@ -398,13 +394,28 @@ export default function ProposalGenerator() {
                               border: '1px solid var(--border)',
                               borderRadius: '6px',
                               cursor: 'pointer',
-                              appearance: 'auto'
+                              appearance: 'auto',
+                              marginBottom: 8
                             }}
                           >
                             {DELIVERABLE_TYPES.map(t => <option key={t.name}>{t.name}</option>)}
                           </select>
+                          <textarea 
+                            value={deliv.description}
+                            onChange={(e) => updateDeliverable(deliv.id, 'description', e.target.value)}
+                            placeholder="Describe what is included in this deliverable..."
+                            rows={2}
+                            style={{ 
+                              width: '100%', 
+                              fontSize: 12, 
+                              padding: '8px 12px',
+                              background: 'var(--bg-secondary)',
+                              border: '1px solid var(--border)',
+                              borderRadius: 6
+                            }}
+                          />
                         </div>
-                        <div className="deliv-controls">
+                        <div className="deliv-controls" style={{ alignSelf: 'flex-start' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f5f5f5', borderRadius: 6, padding: '2px 8px' }}>
                             <button onClick={() => updateDeliverable(deliv.id, 'quantity', Math.max(1, deliv.quantity - 1))} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 8px' }}>-</button>
                             <span style={{ fontSize: 13, fontWeight: 700, minWidth: 20, textAlign: 'center' }}>{deliv.quantity}</span>
@@ -447,13 +458,6 @@ export default function ProposalGenerator() {
                     <label>Advance %</label>
                     <input type="number" value={form.advancePercent} onChange={e => set('advancePercent', e.target.value)} />
                   </div>
-                </div>
-              </Step>
-
-              <Step number="6" title="Additional Notes" active={activeStep === 6} onClick={() => setActiveStep(6)}>
-                <div className="form-group">
-                  <label>Exclusions & Terms</label>
-                  <textarea rows={4} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Any specific terms..." />
                 </div>
               </Step>
             </div>

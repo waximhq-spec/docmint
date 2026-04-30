@@ -86,7 +86,7 @@ ${scopeOfWork}
 ---
 
 ## Deliverables
-${deliverables}
+${data.deliverablesText || deliverables}
 
 ---
 
@@ -102,11 +102,6 @@ ${revisionPolicy}
 
 ## Investment
 ${pricing}
-
----
-
-## Notes
-${notes || 'Standard terms and conditions apply. All deliverables subject to agreed timeline upon project kick-off.'}
 
 ---
 
@@ -415,10 +410,6 @@ ${type !== 'Full Invoice' ? `- **${type === 'Advance Invoice' ? 'Advance Require
 
 ### **${typeLabel}:** **${formatCurrency(amountDue, currency)}**
 
----
-
-**Notes:**
-${type === 'Advance Invoice' ? 'This is an advance invoice.\n' : ''}${type === 'Final Invoice' ? 'This is a final invoice.\n' : ''}${notes || 'Payment due within 7 days.'}
   `.trim();
 
 
@@ -478,7 +469,10 @@ ${type === 'Advance Invoice' ? 'This is an advance invoice.\n' : ''}${type === '
             <tbody>
               ${(data.lineItems || []).map(item => `
                 <tr>
-                  <td style="padding:12px;font-size:13px;border-bottom:1px solid #eee;">${item.description}</td>
+                  <td style="padding:12px;font-size:13px;border-bottom:1px solid #eee;">
+                    <div style="font-weight:700;color:#111;margin-bottom:2px;">${item.title || item.description}</div>
+                    <div style="font-size:11px;color:#666;line-height:1.4;">${item.title ? item.description : ''}</div>
+                  </td>
                   <td style="padding:12px;font-size:13px;text-align:center;border-bottom:1px solid #eee;">${item.quantity}</td>
                   <td style="padding:12px;font-size:13px;text-align:right;border-bottom:1px solid #eee;">${formatCurrency(item.rate, currency)}</td>
                   <td style="padding:12px;font-size:13px;text-align:right;font-weight:600;border-bottom:1px solid #eee;">${formatCurrency((parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0), currency)}</td>
@@ -540,14 +534,21 @@ ${type === 'Advance Invoice' ? 'This is an advance invoice.\n' : ''}${type === '
 
         <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:40px;padding-top:40px;border-top:1px solid #e5e5e5;position:relative;z-index:1;">
           <div>
-            <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:12px;">Payment Info & Terms</div>
-            <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;color:#111;">
-              ${data.bankName ? `<tr><td style="padding:3px 0;width:90px;color:#888;text-transform:uppercase;font-size:9px;font-weight:700;letter-spacing:0.5px;">Bank Name</td><td style="padding:3px 0;font-weight:600;">${data.bankName}</td></tr>` : ''}
-              ${data.holderName ? `<tr><td style="padding:3px 0;width:90px;color:#888;text-transform:uppercase;font-size:9px;font-weight:700;letter-spacing:0.5px;">A/C Holder</td><td style="padding:3px 0;font-weight:600;">${data.holderName}</td></tr>` : ''}
-              ${data.accNumber ? `<tr><td style="padding:3px 0;width:90px;color:#888;text-transform:uppercase;font-size:9px;font-weight:700;letter-spacing:0.5px;">A/C Number</td><td style="padding:3px 0;font-weight:600;">${data.accNumber}</td></tr>` : ''}
-              ${data.ifscCode ? `<tr><td style="padding:3px 0;width:90px;color:#888;text-transform:uppercase;font-size:9px;font-weight:700;letter-spacing:0.5px;">IFSC Code</td><td style="padding:3px 0;font-weight:600;">${data.ifscCode}</td></tr>` : ''}
-            </table>
-            <div style="font-size:12px;color:#777;line-height:1.6;white-space:pre-line;">${type === 'Advance Invoice' ? '<strong>This is an advance invoice.</strong>\n' : ''}${type === 'Final Invoice' ? '<strong>This is a final invoice.</strong>\n' : ''}${notes || 'Payment due within 7 days.'}</div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:12px;">Payment Settlement</div>
+            ${data.bankName ? `
+              <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;color:#111;">
+                <tr><td style="padding:3px 0;width:90px;color:#888;text-transform:uppercase;font-size:9px;font-weight:700;letter-spacing:0.5px;">Bank Name</td><td style="padding:3px 0;font-weight:600;">${data.bankName}</td></tr>
+                ${data.holderName ? `<tr><td style="padding:3px 0;width:90px;color:#888;text-transform:uppercase;font-size:9px;font-weight:700;letter-spacing:0.5px;">A/C Holder</td><td style="padding:3px 0;font-weight:600;">${data.holderName}</td></tr>` : ''}
+                ${data.accNumber ? `<tr><td style="padding:3px 0;width:90px;color:#888;text-transform:uppercase;font-size:9px;font-weight:700;letter-spacing:0.5px;">A/C Number</td><td style="padding:3px 0;font-weight:600;">${data.accNumber}</td></tr>` : ''}
+                ${data.ifscCode ? `<tr><td style="padding:3px 0;width:90px;color:#888;text-transform:uppercase;font-size:9px;font-weight:700;letter-spacing:0.5px;">IFSC Code</td><td style="padding:3px 0;font-weight:600;">${data.ifscCode}</td></tr>` : ''}
+              </table>
+            ` : ''}
+            ${data.upiId ? `
+              <div style="font-size:12px;color:#111;display:flex;align-items:center;gap:8px;">
+                <span style="color:#888;text-transform:uppercase;font-size:9px;font-weight:700;letter-spacing:0.5px;">UPI ID</span>
+                <span style="font-weight:600;">${data.upiId}</span>
+              </div>
+            ` : ''}
           </div>
         </div>
       </div>
